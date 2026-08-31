@@ -1,7 +1,7 @@
 ---
 // Static listing page — posts generated at build time via content collections.
-import Layout from '@/layouts/Layout.astro';
-import PatternNote from '@/components/PatternNote.astro';
+import Layout from '@layouts/Layout.astro';
+import PatternNote from '@components/PatternNote.astro';
 import { getCollection } from 'astro:content';
 
 const posts = await getCollection('blog');

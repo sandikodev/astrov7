@@ -31,3 +31,11 @@ pnpm-debug.log*
 .idea/
 .neon
 .env.local
+
+# graphify knowledge graph output & cache
+.graphify/
+graphify-out/
+graphify.json
+graphify.db
+graphify.sqlite
+*.graphify.*

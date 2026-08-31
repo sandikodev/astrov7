@@ -1,9 +1,15 @@
 ---
-// Fully static landing page — built at CI/deploy time, served edge-cached.
-import Layout from '@/layouts/Layout.astro';
-import PatternNote from '@/components/PatternNote.astro';
+// On-demand SSR landing page — evaluates session dynamically per request on Cloudflare Workers
+export const prerender = false;
+import Layout from '@layouts/Layout.astro';
+import PatternNote from '@components/PatternNote.astro';
 
 const url = Astro.url;
+const user = Astro.locals.user;
+const hasSession = Boolean(user);
+
+const heroCtaLabel = hasSession ? 'Launch Webapp Shell →' : 'Sign In to Access Webapp →';
+const heroCtaHref = hasSession ? '/app' : '/auth?redirect=%2Fapp';
 ---
 
 <Layout title="Astro v7 — Website + Webapp simulation">
@@ -22,7 +28,7 @@ const url = Astro.url;
 		</h1>
 
 		<p class="mt-6 max-w-3xl text-base sm:text-lg leading-relaxed text-zinc-300">
-			A live simulation showcasing Astro 7's hybrid capabilities. The <strong>Website</strong> half is 100% static (SSG) — served instantly from Cloudflare Edge. The <strong>Webapp</strong> half opts in to the Worker with <code class="rounded bg-zinc-800 px-2 py-0.5 font-mono text-xs text-indigo-300">prerender = false</code>, streaming dynamic data on demand.
+			A live simulation showcasing Astro 7's hybrid capabilities. The <strong>Website</strong> half is static-optimized — served instantly from Cloudflare Edge. The <strong>Webapp</strong> half opts in to the Worker with <code class="rounded bg-zinc-800 px-2 py-0.5 font-mono text-xs text-indigo-300">prerender = false</code>, streaming dynamic data on demand.
 		</p>
 
 		<div class="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5">
@@ -33,11 +39,11 @@ const url = Astro.url;
 				Read the Blog →
 			</a>
 			<a
-				href="/app"
+				href={heroCtaHref}
 				class="flex items-center justify-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-5 py-3 text-sm font-semibold text-emerald-300 hover:bg-emerald-500/20 transition"
 			>
 				<span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-				Launch Webapp App Shell →
+				{heroCtaLabel}
 			</a>
 		</div>
 	</header>
@@ -82,14 +88,14 @@ const url = Astro.url;
 	<section class="mt-14 space-y-5">
 		<div class="flex items-center justify-between">
 			<h2 class="text-xl font-bold text-white">Data-Fetch Hierarchy on this Page</h2>
-			<span class="text-xs font-mono text-zinc-500">SSG Level 1</span>
+			<span class="text-xs font-mono text-zinc-500">SSR Mode</span>
 		</div>
 
 		<PatternNote
 			number={1}
-			title="Build-time rendering (SSG)"
-			description="This page is generated once during `astro build`. No Worker invocation, no runtime cost — plain HTML served at edge speed."
-			code={`// frontmatter of this page\n// zero runtime fetch calls — static HTML markup`}
+			title="On-demand session evaluation"
+			description="This page evaluates user session cookies dynamically on Cloudflare Workers, rendering personalized CTA states."
+			code={`export const prerender = false;\nconst user = Astro.locals.user;`}
 		/>
 
 		<PatternNote
@@ -101,14 +107,14 @@ const url = Astro.url;
 
 		<PatternNote
 			number={3}
-			title="On-Demand Opt-in"
-			description="Hop over to /app — the same repo renders webapp pages dynamically in your Cloudflare Worker."
-			code={`export const prerender = false;`}
+			title="Prestige Splash Intro"
+			description="Navigating to /app displays a prestige splash intro before loading the webapp dashboard."
+			code={`<a href="/app">Launch Webapp Shell →</a>`}
 		/>
 	</section>
 
 	<div class="mt-12 rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-4 text-xs font-mono text-zinc-500 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
 		<span>Request URL: <code class="text-zinc-300">{url.href}</code></span>
-		<span class="text-emerald-400">Status: Edge Served</span>
+		<span class="text-emerald-400">Session Status: {hasSession ? `Authenticated (${user?.name})` : 'Unauthenticated'}</span>
 	</div>
 </Layout>

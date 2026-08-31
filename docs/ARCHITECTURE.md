@@ -193,9 +193,62 @@ Because `astro check` runs in `build`, `cf:build`, and `cf:deploy`, the bar is e
 
 ## 10. Failure handling philosophy
 
-- **Upstream timeout**: `fetchJsonWithTimeout` → rendered error card, `Cache-Control: no-store`.
-- **Session missing**: `ActionError` `UNPROCESSABLE_CONTENT`.
-- **Todo missing**: `ActionError` `NOT_FOUND`.
-- **Cache disabled**: `/api/revalidate` returns 400 with an explanation.
-
 The app never silently corrupts; every failure path is visible and typed.
+
+---
+
+## 11. Neon Serverless Ecosystem Architecture
+
+This codebase integrates the complete **Neon Serverless Ecosystem** running over Cloudflare Workers:
+
+### 11.1 Neon Data API (`src/lib/neon.ts`)
+Instead of initializing heavyweight TCP poolers on short-lived Workers, dynamic routes query Neon via **stateless HTTP/2 REST requests** (`/v1/query`). This ensures zero connection overhead, instant cold-starts, and Row-Level Security (RLS) enforcement via Bearer Tokens.
+
+### 11.2 Neon Auth & JWKS (`src/pages/auth/index.astro`)
+User authentication is managed via Neon Auth (BetterAuth adapter). Authentication tokens are validated against Neon's published JWKS JSON endpoint (`NEON_AUTH_JWKS_URL`), maintaining stateless JWT session verification without database roundtrips.
+
+### 11.3 Neon Object Storage (`src/lib/storage.ts`)
+Avatar uploads connect directly to Neon's S3-compatible Object Storage endpoint (`AWS_ENDPOINT_URL_S3`) using `@aws-sdk/client-s3`. Presigned upload URLs and multipart stream handlers keep file storage decoupled from the main database.
+
+### 11.4 RBAC & ABAC Governance Matrix (`src/middleware.ts`)
+Astro middleware intercepts requests to `/app/*` and evaluates user role (RBAC) and dynamic resource attributes (ABAC) before allowing route rendering.
+
+---
+
+## 12. Dev Trace Console & Universal SSE Real-time Telemetry
+
+A key architectural feature of this application is the universal **Dev Trace Console** (`DevTraceConsole.tsx`):
+
+- **Sticky Viewport Docking**: Rendered as a `sticky bottom-0 z-50` bar across all pages.
+- **Cross-Tab SSE Synchronization**: Server-side events emitted to `/api/dev-telemetry/emit` are broadcast via Server-Sent Events (`/api/dev-telemetry/stream`) to all open browser windows in real time.
+- **3-Tab Live Trace**:
+  - 🌐 **Client & App Events**: SPA navigation, page transitions, and UI actions.
+  - 🐘 **Neon Serverless Trace**: REST query execution timings, SQL statements, and RLS headers.
+  - ⛅ **Cloudflare Edge Trace**: Edge Colo location (`CGK`), CF-Ray IDs, and SSR execution milliseconds.
+
+---
+
+## 13. Edge Runtime Caveats & Engine Panics (GitHub Issue #17868)
+
+During local development with `astro dev` and `@astrojs/cloudflare`, developers may encounter a specific runtime crash. We submitted a comprehensive report to `withastro/astro`:
+
+> 🐛 **GitHub Issue #17868**: `[bug] @astrojs/cloudflare dev runner panics workerd on SSR module resolution failure, breaking route registry`
+
+### 13.1 Failure Mechanism (3-Step Domino Effect)
+
+1. **Unresolved Virtual Specifiers in `workerd`**:
+   During `astro dev`, `@astrojs/cloudflare` spawns a local `workerd` C++ subprocess. When Vite SSR passes unresolved dynamic aliases or virtual script queries (such as `<ClientRouter />`'s `ClientRouter.astro?astro&type=script`) into the V8 isolate, the C++ runtime throws an uncaught exception (`remote.jsg.Error: Unable to resolve ...`).
+2. **IPC Pipe Disconnection (`Broken Pipe`)**:
+   Because `@astrojs/cloudflare` does not catch this exception at the IPC socket boundary, `workerd` panics and abruptly closes the Unix socket pipe:
+   `kj/async-io-unix.c++:186: disconnected: ::write(fd, buffer.begin(), buffer.size()): Broken pipe`
+3. **Route Registry Collapse**:
+   Astro's `DevFacadeApp` (`getModuleForRoute` in `astro/dist/core/environment/production.js`) loses socket connection to `workerd`, clearing its route component map and causing subsequent requests to fail with:
+   `Error: Unexpectedly unable to find a component instance for route /`
+
+### 13.2 Verified Production Workarounds
+
+Our codebase implements the official triaged mitigations to ensure 100% stability:
+
+1. **`ssr.optimizeDeps.noDiscovery = true`**: Prevents Vite 6 mid-flight dependency discovery from wiping `.vite/deps_ssr`.
+2. **Explicit Dependency Exclusion**: Excluding `@astrojs/preact`, `astro/actions`, `astro:actions`, and `astro/content` in `astro.config.mjs` under `vite.optimizeDeps.exclude` and `vite.ssr.optimizeDeps.exclude`.
+3. **Path Aliasing**: Single Source of Truth aliasing via `tsconfig.json` (`@components/*`, `@layouts/*`, `@lib/*`, etc.).

@@ -1,0 +1,25 @@
+---
+// Public Auth Route Outside /app — Prestige SPA Tabbed Sign In / Register via Neon Auth
+export const prerender = false;
+import AuthLayout from '@layouts/AuthLayout.astro';
+import AuthForm from '@components/AuthForm';
+
+// If user is ALREADY authenticated, redirect immediately to /app prestige splash screen!
+const user = Astro.locals.user;
+if (user) {
+	return Astro.redirect('/app');
+}
+
+const redirectParam = Astro.url.searchParams.get('redirect') || '/app';
+---
+
+<AuthLayout title="Sign In · AstroJS v7 Webapp" description="Prestige Authentication Portal">
+	<div class="space-y-5 text-center">
+		<div>
+			<h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Access Portal</h1>
+			<p class="mt-1 text-xs text-zinc-400">Sign in to your account or register for access</p>
+		</div>
+
+		<AuthForm client:load redirectUrl={redirectParam} />
+	</div>
+</AuthLayout>

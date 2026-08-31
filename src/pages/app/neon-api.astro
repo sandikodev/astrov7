@@ -1,0 +1,14 @@
+---
+// Dedicated Webapp Route: Neon Data API (Serverless HTTP API) Use Case Simulations
+export const prerender = false;
+import AppLayout from '@layouts/AppLayout.astro';
+import NeonDataApiShowcase from '@components/NeonDataApiShowcase';
+---
+
+<AppLayout title="Neon Data API Showcase" description="Real-World Serverless HTTP Postgres Use Case Simulations" live>
+	<p class="mb-6 text-xs sm:text-sm text-zinc-400 leading-relaxed">
+		Explore the 5 core architectural use cases of <strong>Neon Data API (Serverless HTTP API)</strong>. From sub-millisecond edge queries on Cloudflare Workers to atomic transaction batching, webhook receivers, RLS security, and instant database branching.
+	</p>
+
+	<NeonDataApiShowcase client:load />
+</AppLayout>

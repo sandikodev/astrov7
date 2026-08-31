@@ -1,7 +1,7 @@
 // On-demand API endpoint with route caching (Cloudflare CDN).
 // Pattern: client island → /api/search → (route cache) → upstream JSONPlaceholder.
 import type { APIContext } from 'astro';
-import { fetchJsonWithTimeout } from '@/lib/http';
+import { fetchJsonWithTimeout } from '@lib/http';
 
 export const prerender = false;
 

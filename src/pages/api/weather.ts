@@ -1,7 +1,7 @@
 // On-demand API endpoint with route caching (Cloudflare CDN).
 // Server-side upstream fetch with timeout + typed normalization + cache tags.
 import type { APIContext } from 'astro';
-import { fetchJsonWithTimeout } from '@/lib/http';
+import { fetchJsonWithTimeout } from '@lib/http';
 
 export const prerender = false;
 

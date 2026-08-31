@@ -96,13 +96,26 @@ Each push rebuilds and deploys automatically, with previews for PRs.
 
 | Where | When | What |
 |-------|------|------|
-| `.env` | local `astro dev` | non-secret dev values |
-| `.dev.vars` (git-ignored) | local `wrangler dev` | local secrets |
+| `.env` | local `astro dev` | non-secret dev values & Neon connection strings |
+| `.dev.vars` (git-ignored) | local `wrangler dev` | local secrets for workerd emulation |
 | `wrangler secret put <KEY>` | production | real secrets (Cloudflare Secrets) |
-| `wrangler.jsonc` → `vars` | production | non-secret constants |
+| `wrangler.jsonc` → `vars` | production | non-secret constants (Data API & Auth URLs) |
+
+To set production secrets for Neon Database, Neon Auth, and Neon Object Storage via Wrangler CLI:
+
+```sh
+npx wrangler secret put DATABASE_URL
+npx wrangler secret put PUBLIC_NEON_DATA_API_URL
+npx wrangler secret put PUBLIC_NEON_AUTH_URL
+npx wrangler secret put NEON_AUTH_JWKS_URL
+npx wrangler secret put AWS_ENDPOINT_URL_S3
+npx wrangler secret put AWS_ACCESS_KEY_ID
+npx wrangler secret put AWS_SECRET_ACCESS_KEY
+npx wrangler secret put NEON_READONLY_API_TOKEN
+```
 
 To use a var in code, add it to `astro.config.mjs` → `env.schema` (via `envField`) and import from
-`astro:env/server` (or `astro:env/client` for `PUBLIC_*`). See `.env.example`.
+`astro:env/server` (or `astro:env/client` for `PUBLIC_*`). See `.env.example` and `.dev.vars.example`.
 
 ---
 
@@ -124,6 +137,8 @@ Cloudflare adds the record + free TLS automatically; no DNS config to hand-wire 
 | Symptom | Cause / fix |
 |---------|-------------|
 | Unknown URLs return a bare 404 | `assets.not_found_handling` defaults to `none`; set `"404-page"` (this repo already does) and ship `src/pages/404.astro`. |
+| `[unstorage] Invalid binding SESSION: undefined` | The `SESSION` KV namespace is missing from `wrangler.jsonc` or dev server wasn't restarted. Register `"kv_namespaces": [{ "binding": "SESSION", "id": "astrov7_dev_session_kv" }]` and restart `astro dev`. |
+| `workerd` IPC Panic / Broken Pipe (GitHub Issue #17868) | Module resolution failure in Vite SSR crashed the `workerd` socket. Set `ssr.optimizeDeps.noDiscovery = true` and exclude `@astrojs/preact` & `astro/actions` in `astro.config.mjs`. |
 | "Hydration completed but contains mismatches" | Cloudflare **Auto Minify** rewrote HTML; disable it under site Speed/optimization settings. |
 | `Could not resolve "XXX"` at build | The package uses Node APIs not supported on Workers (check `nodejs_compat` flag + Node.js compatibility docs). |
 | Intermittent `Error 1102` (CPU limit) on free plan | On-demand SSR exceeded the free **10 ms CPU / invocation** budget; add `cache.set`/SWR, cache EDR; consider Workers Paid ($5/mo) for heavy SSR. |

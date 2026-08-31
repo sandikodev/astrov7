@@ -1,8 +1,7 @@
 ---
-// Webapp Layout — Fixed Viewport Desktop App Shell + Native Mobile Layout + SPA ClientRouter + Hysteresis Zero-Flicker Sticky Header
-import '@/styles/global.css';
-import AppNav from '@/components/AppNav.astro';
-import { ClientRouter } from 'astro:transitions';
+// Webapp Layout — Fixed Viewport Desktop App Shell + Native Mobile Layout — Composes BaseLayout
+import BaseLayout from '@layouts/BaseLayout.astro';
+import AppNav from '@components/AppNav.astro';
 
 interface Props {
 	title: string;
@@ -17,114 +16,94 @@ const {
 } = Astro.props;
 ---
 
-<!doctype html>
-<html lang="en" class="dark">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="generator" content={Astro.generator} />
-		<meta name="description" content={description} />
-		<meta name="color-scheme" content="dark" />
-		<meta name="robots" content="noindex" />
-		<title>{title}</title>
-		{/* Enable ClientRouter for instant SPA client transitions across webapp modules */}
-		<ClientRouter />
-	</head>
-	<body class="bg-zinc-950 text-zinc-100 selection:bg-zinc-800 selection:text-white antialiased min-h-screen">
-		{/* Native App Layout Container — Fixed 100vh viewport on Desktop */}
-		<div class="flex flex-col md:flex-row md:h-screen md:max-h-screen md:overflow-hidden">
-			{/* Webapp Navigation */}
-			<AppNav />
+<BaseLayout title={title} description={description} bodyClass="bg-zinc-950 text-zinc-100 selection:bg-zinc-800 selection:text-white antialiased min-h-screen md:h-screen md:max-h-screen md:overflow-hidden flex flex-col">
+	{/* Main Workspace Area (AppNav Sidebar + Main Workspace Scroll Area) */}
+	<div class="flex flex-1 flex-col md:flex-row min-h-0 md:overflow-hidden w-full">
+		{/* Webapp Navigation */}
+		<AppNav />
 
-			{/* Main App Workspace Content Column */}
-			<div class="flex flex-1 flex-col min-w-0 md:h-screen md:max-h-screen md:overflow-hidden">
-				{/* Inner Scrollable Workspace Area */}
-				<div id="app-workspace-scroll" class="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pt-0 pb-28 md:pb-8">
-					<main class="w-full max-w-5xl mx-auto">
-						{/* Zero-Flicker Sticky Header Banner (Flush at top-0, Hysteresis Protected) */}
-						<header
-							id="app-sticky-header"
-							class="sticky top-0 z-30 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3 mb-6 border-b border-zinc-800/80 bg-zinc-950/95 backdrop-blur-md transition-all duration-200"
-						>
-							<div class="flex items-center justify-between gap-3 min-w-0">
-								<div class="min-w-0 flex-1">
-									<h1 id="header-title" class="text-lg sm:text-xl font-bold tracking-tight text-white transition-all duration-200 truncate">
-										{title}
-									</h1>
-									<p id="header-desc" class="mt-0.5 text-xs sm:text-sm text-zinc-400 transition-all duration-200 truncate">
-										{description}
-									</p>
-								</div>
+		{/* Inner Scrollable Workspace Area */}
+		<div id="app-workspace-scroll" class="flex-1 overflow-y-auto w-full pt-0 flex flex-col min-h-0">
+			<div class="flex-1">
+				{/* Zero-Flicker Full-Width Sticky Header Banner */}
+				<header
+					id="app-sticky-header"
+					class="sticky top-0 z-30 w-full px-4 sm:px-6 py-3 mb-6 border-b border-zinc-800/80 bg-zinc-950/95 backdrop-blur-md transition-all duration-200"
+				>
+					<div class="w-full flex items-center justify-between gap-3 min-w-0">
+						<div class="min-w-0 flex-1">
+							<h1 id="header-title" class="text-lg sm:text-xl font-bold tracking-tight text-white transition-all duration-200 truncate">
+								{title}
+							</h1>
+							<p id="header-desc" class="mt-0.5 text-xs sm:text-sm text-zinc-400 transition-all duration-200 truncate">
+								{description}
+							</p>
+						</div>
 
-								{live && (
-									<span id="header-badge" class="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs font-mono text-zinc-400 self-center">
-										<span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
-										prerender = false
-									</span>
-								)}
-							</div>
-						</header>
-
-						<slot />
-					</main>
-				</div>
-
-				{/* App Footer (Flush to left & right edges) */}
-				<footer class="hidden md:block shrink-0 border-t border-zinc-800 bg-zinc-950 px-6 py-3.5 text-xs text-zinc-500 z-20">
-					<div class="flex items-center justify-between w-full font-mono text-[11px]">
-						<span>Astro v7 Webapp Shell</span>
-						<span>Cloudflare Workers Runtime</span>
+						{live && (
+							<span id="header-badge" class="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs font-mono text-zinc-400 self-center">
+								<span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+								prerender = false
+							</span>
+						)}
 					</div>
-				</footer>
+				</header>
+
+				<main class="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-6">
+					<slot />
+				</main>
 			</div>
+
+			{/* Compact Webapp Workspace Micro-Footer (Spans corner-to-corner full width) */}
+			<footer class="mt-auto border-t border-zinc-800/60 bg-zinc-950/90 py-2.5 px-4 sm:px-6 text-[11px] text-zinc-500 shrink-0">
+				<div class="w-full flex flex-col sm:flex-row items-center justify-between gap-2">
+					<p class="font-mono text-zinc-400">astrov7 · Native Webapp Shell</p>
+					<p>On-demand Cloudflare Workers SSR + Neon Serverless Postgres</p>
+				</div>
+			</footer>
 		</div>
+	</div>
 
-		<script is:inline>
-			function setupStickyHeader() {
-				const scrollContainer = document.getElementById('app-workspace-scroll');
-				const header = document.getElementById('app-sticky-header');
-				const title = document.getElementById('header-title');
-				const desc = document.getElementById('header-desc');
+	<script is:inline>
+		function setupStickyHeader() {
+			const scrollContainer = document.getElementById('app-workspace-scroll');
+			const header = document.getElementById('app-sticky-header');
+			const title = document.getElementById('header-title');
+			const desc = document.getElementById('header-desc');
 
-				if (!scrollContainer || !header || !title) return;
+			if (!scrollContainer || !header || !title) return;
 
-				// Hysteresis State: prevents flicker at boundary values
-				let isMinimized = false;
+			let isMinimized = false;
 
-				const onScroll = () => {
-					const st = scrollContainer.scrollTop;
+			const onScroll = () => {
+				const st = scrollContainer.scrollTop;
 
-					// Trigger Minimize ONLY when scrolling DOWN past 30px
-					if (!isMinimized && st > 30) {
-						isMinimized = true;
-						header.classList.add('shadow-md', 'border-zinc-800');
-						title.classList.add('text-sm', 'font-semibold');
-						title.classList.remove('text-lg', 'sm:text-xl', 'font-bold');
-						if (desc) {
-							desc.classList.add('hidden');
-						}
-					} 
-					// Trigger Expand ONLY when scrolling UP past 8px (22px Hysteresis Gap prevents flicker)
-					else if (isMinimized && st < 8) {
-						isMinimized = false;
-						header.classList.remove('shadow-md');
-						title.classList.remove('text-sm', 'font-semibold');
-						title.classList.add('text-lg', 'sm:text-xl', 'font-bold');
-						if (desc) {
-							desc.classList.remove('hidden');
-						}
+				if (!isMinimized && st > 30) {
+					isMinimized = true;
+					header.classList.add('shadow-md', 'border-zinc-800');
+					title.classList.add('text-sm', 'font-semibold');
+					title.classList.remove('text-lg', 'sm:text-xl', 'font-bold');
+					if (desc) {
+						desc.classList.add('hidden');
 					}
-				};
+				} 
+				else if (isMinimized && st < 8) {
+					isMinimized = false;
+					header.classList.remove('shadow-md');
+					title.classList.remove('text-sm', 'font-semibold');
+					title.classList.add('text-lg', 'sm:text-xl', 'font-bold');
+					if (desc) {
+						desc.classList.remove('hidden');
+					}
+				}
+			};
 
-				scrollContainer.removeEventListener('scroll', onScroll);
-				scrollContainer.addEventListener('scroll', onScroll, { passive: true });
-				onScroll();
-			}
+			scrollContainer.removeEventListener('scroll', onScroll);
+			scrollContainer.addEventListener('scroll', onScroll, { passive: true });
+			onScroll();
+		}
 
-			setupStickyHeader();
-			document.addEventListener('astro:page-load', setupStickyHeader);
-		</script>
-	</body>
-</html>
+		setupStickyHeader();
+		document.addEventListener('astro:page-load', setupStickyHeader);
+	</script>
+</BaseLayout>

@@ -1,9 +1,9 @@
 ---
 // On-demand page: per-user state via Sessions (Cloudflare KV) + astro:actions mutations.
 export const prerender = false;
-import AppLayout from '@/layouts/AppLayout.astro';
-import TodoApp from '@/components/TodoApp.tsx';
-import PatternNote from '@/components/PatternNote.astro';
+import AppLayout from '@layouts/AppLayout.astro';
+import TodoApp from '@components/TodoApp';
+import PatternNote from '@components/PatternNote.astro';
 
 const todos = (await Astro.session?.get('todos')) ?? [];
 const sessionIdSnippet = Astro.request.headers
@@ -28,7 +28,7 @@ const sessionIdSnippet = Astro.request.headers
 			</span>
 		</div>
 
-		<TodoApp client:load initial={todos as import('@/actions').Todo[]} />
+		<TodoApp client:load initial={todos as import('../../actions').Todo[]} />
 	</div>
 
 	<p class="mt-2.5 text-xs text-zinc-500 font-sans">

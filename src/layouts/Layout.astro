@@ -1,40 +1,27 @@
 ---
-// Public Website layout (Landing, Blog) — Responsive Marketing Site UI
-import '@/styles/global.css';
-import Nav from '@/components/Nav.astro';
+// Public Website layout (Landing, Blog) — Composes BaseLayout
+import BaseLayout from '@layouts/BaseLayout.astro';
+import Nav from '@components/Nav.astro';
 
 interface Props {
 	title: string;
 	description?: string;
 }
 
-const { title, description = 'Astro v7 simulation — website & webapp best practices' } = Astro.props;
+const { title, description } = Astro.props;
 ---
 
-<!doctype html>
-<html lang="en" class="dark">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="generator" content={Astro.generator} />
-		<meta name="description" content={description} />
-		<meta name="color-scheme" content="dark" />
-		<title>{title}</title>
-	</head>
-	<body class="flex min-h-screen flex-col bg-zinc-950 text-zinc-100 selection:bg-indigo-500/40 selection:text-white antialiased">
-		<Nav />
-		
-		<main class="mx-auto w-full max-w-6xl flex-1 px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 pb-20">
-			<slot />
-		</main>
+<BaseLayout title={title} description={description}>
+	<Nav />
+	
+	<main class="mx-auto w-full max-w-6xl flex-1 px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 pb-20">
+		<slot />
+	</main>
 
-		<footer class="border-t border-zinc-800/80 bg-zinc-950/80 px-4 py-8 text-center text-xs text-zinc-500">
-			<div class="mx-auto flex max-w-6xl flex-col sm:flex-row items-center justify-between gap-4 px-4 sm:px-6">
-				<p class="font-mono text-zinc-400">astrov7 · Public Website & Blog</p>
-				<p>Static islands (website) + On-demand Workers (webapp). Deployed on Cloudflare.</p>
-			</div>
-		</footer>
-	</body>
-</html>
+	<footer class="border-t border-zinc-800/80 bg-zinc-950/80 px-4 py-8 text-center text-xs text-zinc-500">
+		<div class="mx-auto flex max-w-6xl flex-col sm:flex-row items-center justify-between gap-4 px-4 sm:px-6">
+			<p class="font-mono text-zinc-400">astrov7 · Public Website & Blog</p>
+			<p>Static islands (website) + On-demand Workers (webapp). Deployed on Cloudflare.</p>
+		</div>
+	</footer>
+</BaseLayout>

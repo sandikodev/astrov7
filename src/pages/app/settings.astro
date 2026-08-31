@@ -1,0 +1,14 @@
+---
+// Webapp Settings Route — RBAC & ABAC Governance Matrix
+export const prerender = false;
+import AppLayout from '@layouts/AppLayout.astro';
+import RbacAbacManager from '@components/RbacAbacManager';
+import { getRbacRoles, getAbacPolicies } from '@lib/neon';
+
+const roles = getRbacRoles();
+const policies = getAbacPolicies();
+---
+
+<AppLayout title="App Settings & Governance" description="RBAC Matrix & ABAC Policy Governance Showcase" live>
+	<RbacAbacManager client:load roles={roles} policies={policies} />
+</AppLayout>

@@ -1,15 +1,14 @@
-# Env vars reference for astrov7 (Astro v7 + Cloudflare Workers + NeonDB Ecosystem)
-# Copy to `.env` for `astro dev` and `.dev.vars` for local wrangler dev.
-# For Cloudflare Workers Production, set secrets via `wrangler secret put <KEY>`
+# Local secrets for wrangler dev / bun run cf:preview
+# Copy this file to `.dev.vars` (git-ignored) for local Cloudflare Workers workerd emulation.
 
 # ── Neon Postgres Connection ──────────────────────────────────────────────
-DATABASE_URL="postgresql://user:password@ep-sample-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require"
+DATABASE_URL="postgresql://neondb_owner:sample_password@ep-sample-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 
-# ── Neon Data API (Serverless REST/HTTP) ──────────────────────────────────
+# ── Neon Data API (Serverless REST/HTTP Stateless Queries) ────────────────
 PUBLIC_NEON_DATA_API_URL="https://ep-sample.apirest.us-east-2.aws.neon.tech/neondb/rest/v1"
 VITE_NEON_DATA_API_URL="https://ep-sample.apirest.us-east-2.aws.neon.tech/neondb/rest/v1"
 
-# ── Neon Auth (BetterAuth Adapter & JWKS) ──────────────────────────────────
+# ── Neon Auth (BetterAuth Adapter & JWKS Verification) ────────────────────
 PUBLIC_NEON_AUTH_URL="https://ep-sample.neonauth.us-east-2.aws.neon.tech/neondb/auth"
 VITE_NEON_AUTH_URL="https://ep-sample.neonauth.us-east-2.aws.neon.tech/neondb/auth"
 NEON_AUTH_JWKS_URL="https://ep-sample.neonauth.us-east-2.aws.neon.tech/neondb/auth/.well-known/jwks.json"
@@ -20,3 +19,6 @@ AWS_ACCESS_KEY_ID="nak_live_sample_access_key"
 AWS_SECRET_ACCESS_KEY="nsk_live_sample_secret_key"
 AWS_REGION="us-east-2"
 S3_BUCKET_NAME="assets"
+
+# ── Telemetry & Read-Only Management Tokens ────────────────────────────────
+NEON_READONLY_API_TOKEN="napi_sample_read_only_telemetry_token"

@@ -1,0 +1,44 @@
+---
+// Universal Base Shell Layout — Single Source of Truth for Head, ClientRouter, & DevTraceConsole
+import '@styles/global.css';
+import DevTraceConsole from '@components/DevTraceConsole';
+import { ClientRouter } from 'astro:transitions';
+
+interface Props {
+	title: string;
+	description?: string | undefined;
+	bodyClass?: string | undefined;
+	htmlClass?: string | undefined;
+}
+
+const {
+	title,
+	description = 'Astro v7 simulation — website & webapp best practices',
+	bodyClass = 'bg-zinc-950 text-zinc-100 selection:bg-indigo-500/40 selection:text-white antialiased min-h-screen flex flex-col',
+	htmlClass = 'dark',
+} = Astro.props;
+
+const serverTrace = Astro.locals.serverTrace;
+---
+
+<!doctype html>
+<html lang="en" class={htmlClass}>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+		<meta name="generator" content={Astro.generator} />
+		<meta name="description" content={description} />
+		<meta name="color-scheme" content="dark" />
+		<title>{title}</title>
+		{/* Enable ClientRouter for instant SPA client transitions */}
+		<ClientRouter />
+	</head>
+	<body class={bodyClass}>
+		<slot />
+
+		{/* Single Universal DevTraceConsole Mount (Hidden on Mobile for Clean Native UX, Active on Desktop) */}
+		{serverTrace ? <DevTraceConsole client:load serverTrace={serverTrace} /> : <DevTraceConsole client:load />}
+	</body>
+</html>

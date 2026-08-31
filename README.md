@@ -1,185 +1,288 @@
-# astrov7 — Astro v7 × Cloudflare Workers (reference implementation)
+# astrov7 — Astro v7 × Cloudflare Workers × Neon Serverless (Reference Implementation)
 
-> A single Astro codebase that is **two things at once**: a fully-static *website* and an
-> on-demand *webapp*, deployed together on **Cloudflare Workers with Workers Static Assets**.
-> Built to serve as a community reference for production-grade Astro v7 patterns on Cloudflare's free tier.
+> A single Astro codebase that is **two things at once**: a fully-static *website* and an on-demand *webapp*, deployed together on **Cloudflare Workers with Workers Static Assets** and powered by **Neon Serverless Postgres, Neon Auth, & Neon Object Storage**.
+> Built to serve as an international community reference for production-grade Astro v7 patterns, edge computing, and serverless database integration.
 
-**Live demo** → https://astrov7.sandikodev.workers.dev
+**Live demo** → [https://astrov7.sandikodev.workers.dev](https://astrov7.sandikodev.workers.dev)
 
-![Astro v7](https://img.shields.io/badge/Astro-7.2-FF5D01?logo=astro&logoColor=white)
-![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-orange?logo=cloudflare&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TS-strictest-3178C6?logo=typescript&logoColor=white)
-![Preact](https://img.shields.io/badge/Preact-islands-673AB8?logo=preact&logoColor=white)
-![Tailwind CSS 4](https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white)
-![Free tier](https://img.shields.io/badge/deploy-FREE-00C853)
+[![Astro v7](https://img.shields.io/badge/Astro-7.2-FF5D01?logo=astro&logoColor=white)](https://astro.build)
+[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-orange?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com)
+[![Neon Postgres](https://img.shields.io/badge/Neon-Serverless_Postgres-00E599?logo=postgresql&logoColor=white)](https://neon.tech)
+[![TypeScript](https://img.shields.io/badge/TS-strictest-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Preact](https://img.shields.io/badge/Preact-islands-673AB8?logo=preact&logoColor=white)](https://preactjs.com)
+[![Tailwind CSS 4](https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![Free Tier Friendly](https://img.shields.io/badge/deploy-FREE-00C853)](https://workers.cloudflare.com)
 
 ---
 
-## Table of contents
+## Table of Contents
 
-- [Why this project exists](#why-this-project-exists)
-- [What it demonstrates](#what-it-demonstrates)
-- [Architecture in one picture](#architecture-in-one-picture)
-- [Tech stack](#tech-stack)
-- [Project structure](#project-structure)
-- [Getting started](#getting-started)
-- [Cloudflare-specifics](#cloudflare-specifics)
+- [Why This Project Exists](#why-this-project-exists)
+- [What It Demonstrates](#what-it-demonstrates)
+- [Architecture in One Picture](#architecture-in-one-picture)
+- [Deep Dive: Neon Serverless Ecosystem Integration](#deep-dive-neon-serverless-ecosystem-integration)
+- [Real-Time Telemetry: Dev Trace Console (SSE)](#real-time-telemetry-dev-trace-console-sse)
+- [Known Caveat & Engine Issue (GitHub Issue #17868)](#known-caveat--engine-issue-github-issue-17868)
+- [Clean Architecture & Import Aliasing Convention](#clean-architecture--import-aliasing-convention)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Cloudflare & Environment Configuration](#cloudflare--environment-configuration)
 - [Deployment](#deployment)
-- [The data-fetch hierarchy](#the-data-fetch-hierarchy)
+- [The Data-Fetch Hierarchy](#the-data-fetch-hierarchy)
 - [Docs](#docs)
-- [Roadmap / slots for your own experiments](#roadmap--slots-for-your-own-experiments)
+- [Roadmap & Integration Slots (Sanity, Sentry, Payload CMS)](#roadmap--integration-slots-sanity-sentry-payload-cms)
 
 ---
 
-## Why this project exists
+## Why This Project Exists
 
-Astro v7 (the "speed release", Rust compiler, Sätteri Markdown, queued rendering) lands on
-**Cloudflare Workers** as the default deploy target — the `@astrojs/cloudflare` adapter **no longer
-supports Cloudflare Pages**. This repo is a working, deployed proof that the modern stack works:
+Astro v7 (the "speed release", Rust compiler, Sätteri Markdown, queued rendering) lands on **Cloudflare Workers** as the default deploy target — the `@astrojs/cloudflare` adapter **no longer supports Cloudflare Pages**. This repository is a working, deployed proof that the modern edge stack works seamlessly:
 
 - **Static island rendering** for the public site (zero server cost, edge-cached files).
-- **On-demand rendering** for the app half, all inside **one Worker** that Cloudflare auto-provisions
-  bindings for (`ASSETS`, encrypted `SESSION` KV, `IMAGES`).
-- Everything runs on the **Cloudflare free plan** — this demo is live without paying a cent.
+- **On-demand rendering** for the app half, all inside **one Worker** that Cloudflare auto-provisions bindings for (`ASSETS`, encrypted `SESSION` KV, `IMAGES`).
+- **Serverless Database & Auth**: Direct HTTP/2 querying via Neon Data API, JWT authentication via Neon Auth (BetterAuth-compatible), and S3-compatible avatar uploads via Neon Object Storage.
+- **Universal Dev Console**: Real-time Server-Sent Events (SSE) telemetry synced live across all open browser instances.
+- **Free Tier Friendly**: Everything runs on the Cloudflare and Neon free tiers — live without paying a cent.
 
 ---
 
-## What it demonstrates
+## What It Demonstrates
 
-| Route | Rendering | Pattern highlighted |
-|-------|-----------|---------------------|
-| `/` | static (build-time) | Landing page, zero fetch, served as a file |
-| `/blog` · `/blog/[slug]` | static (build-time) | Content collections, typed frontmatter, `getCollection`, `getStaticPaths` |
-| `/404` | static | Custom 404 via Workers Assets `not_found_handling: "404-page"` |
-| `/` redirects | static | `_redirects` (301 from legacy path) |
-| `/app` | on-demand | App shell; sidebar + mobile tab bar; live streamed timestamps |
-| `/app/weather` | on-demand | Server-side upstream `fetch` + **page-level route caching** + **server island** (`server:defer`) |
-| `/app/todos` | on-demand | **`astro:actions`** mutations + **Sessions** (encrypted KV) per browser |
-| `/app/search` | on-demand | Preact **client island** → **route-cached API** + **tag invalidation** |
-| `/api/weather` | on-demand | Typed `fetchJsonWithTimeout`, `cache.set({maxAge, swr, tags})` |
-| `/api/search` | on-demand | Route-cached JSON endpoint (SWR), debounced by the client island |
-| `/api/revalidate` | on-demand | Purging the Cloudflare edge cache by tag via `context.cache.invalidate` |
-
-Every app route is `export const prerender = false` (on-demand) while the rest of the repo stays
-`output: 'static'` by default — **hybrid rendering inside a single deployment**.
+| Route | Rendering | Pattern Highlighted |
+|---|---|---|
+| `/` | Static (build-time) | Landing page, zero fetch, served as edge assets |
+| `/blog` · `/blog/[slug]` | Static (build-time) | Content collections, typed frontmatter, `getCollection`, `getStaticPaths` |
+| `/404` | Static | Custom 404 via Workers Assets `not_found_handling: "404-page"` |
+| `/` redirects | Static | `_redirects` (301 rewrite rules from legacy paths) |
+| `/auth` | On-demand | Prestige tabbed Sign In / Register SPA modal powered by Neon Auth |
+| `/app` | On-demand | App shell; full-width sticky banner header + micro-footer |
+| `/app/overview` | On-demand | Real-time Worker streaming dashboard |
+| `/app/neon-api` | On-demand | Serverless HTTP Postgres querying via **Neon Data API** (`/v1/query`) |
+| `/app/weather` | On-demand | Server-side upstream `fetch` + **page-level route caching** + **server island** (`server:defer`) |
+| `/app/todos` | On-demand | **`astro:actions`** mutations + **Sessions** (encrypted Cloudflare KV) per browser |
+| `/app/search` | On-demand | Preact **client island** → **route-cached API** + **tag invalidation** |
+| `/app/profile` | On-demand | Profile management + avatar uploads to **Neon Object Storage (S3)** |
+| `/app/settings` | On-demand | **RBAC & ABAC Governance Matrix** simulator |
+| `/api/weather` | On-demand | Typed `fetchJsonWithTimeout`, `cache.set({maxAge, swr, tags})` |
+| `/api/search` | On-demand | Route-cached JSON endpoint (SWR), debounced by Preact island |
+| `/api/revalidate` | On-demand | Purging the Cloudflare edge cache by tag via `context.cache.invalidate` |
+| `/api/avatar/upload` | On-demand | S3 Presigned Multipart Upload to Neon Object Storage |
+| `/api/dev-telemetry/stream` | On-demand | Real-time Server-Sent Events (SSE) log stream for DevTraceConsole |
+| `/api/dev-telemetry/emit` | On-demand | Multi-browser broadcast endpoint for real-time telemetry sync |
 
 ---
 
-## Architecture in one picture
+## Architecture in One Picture
 
 ```text
-                         ┌────────────────────────────────────────────┐
-   Browser ─────────────►│  Cloudflare Workers (static assets + SSR)  │
-                         │                                            │
-                         │  /  /blog/*   → dist/client  ·  (files)    │
-                         │  /app/*       → Worker SSR   ·  (cached)   │
-                         │  /api/*       → Worker SSR   ·  (SWR)      │
-                         │                                            │
-                         │   bindings: ASSETS · SESSION (KV) · IMAGES │
-                         └──────┬──────────────┬──────────────┬───────┘
-                                │              │              │
-                     upstream    ▼              ▼              ▼
-                   (fetch w/   Weather API   Encrypted    Image
-                    timeout)    · public     session KV   transforms
-                                JSONPlaceholder
-                                    · public
+                               ┌───────────────────────────────────────────────────────────┐
+     Browser (User) ──────────►│        Cloudflare Workers Edge (Hybrid SSR + Assets)       │
+                               │                                                           │
+                               │  /  /blog/*      → Static Assets (CDN Cache - 0ms Cost)   │
+                               │  /app/*          → Worker SSR (On-Demand HTML Streaming) │
+                               │  /api/*          → Worker SSR (SWR Route-Cached JSON)     │
+                               │                                                           │
+                               │   bindings: ASSETS  ·  SESSION (KV)  ·  IMAGES            │
+                               └───────┬──────────────────┬──────────────────┬─────────────┘
+                                       │                  │                  │
+                             Neon API  ▼        Neon Auth ▼       Neon S3    ▼
+                           ┌───────────────┐  ┌───────────────┐  ┌───────────────┐
+                           │ Neon Data API │  │   Neon Auth   │  │ Neon Storage  │
+                           │  REST / HTTP2 │  │  JWKS / OAuth │  │ S3 Compatible │
+                           └───────────────┘  └───────────────┘  └───────────────┘
 ```
 
-- **Static half** (`/`, `/blog/*`): produced at `astro build`, uploaded as assets, served by
-  Cloudflare's global CDN. Requests to static assets are **free & unlimited**.
-- **Dynamic half** (`/app/*`, `/api/*`): `prerender = false` pages run on the Worker on every
-  request, streamed HTML, cached via `Astro.cache` / `routeRules` SWR.
-- **State**: encrypted, per-browser sessions persisted in Workers KV.
-- **Cache invalidation**: `/api/revalidate` purges cached routes globally by tag.
+- **Static Half** (`/`, `/blog/*`): Produced at `astro build`, uploaded as static assets, served by Cloudflare's global CDN with zero Worker invocations.
+- **Dynamic Half** (`/app/*`, `/api/*`): `prerender = false` pages run on the Worker on every request, streaming HTML and JSON cached via `Astro.cache` / `routeRules` SWR.
+- **Database & Storage Layer**: Neon Serverless Postgres pooler, HTTP Data API, BetterAuth JWT validation, and S3 Bucket integration.
+- **State**: Encrypted, per-browser sessions persisted in Cloudflare Workers KV (`SESSION`).
+- **Telemetry**: Cross-browser log synchronization via Server-Sent Events (SSE).
 
 ---
 
-## Tech stack
+## Deep Dive: Neon Serverless Ecosystem Integration
+
+This codebase serves as an end-to-end integration sample for the **Neon Serverless Ecosystem** on Cloudflare Workers:
+
+### 1. Neon Data API (`src/lib/neon.ts`)
+Instead of opening heavy TCP database connections, the application communicates with Neon using stateless **HTTP/2 REST queries** (`/v1/query`). This eliminates connection pooling overhead on Cloudflare Workers and enforces Row-Level Security (RLS) via Bearer Tokens.
+
+### 2. Neon Auth & JWKS (`src/pages/auth/index.astro`)
+Authentication is handled via Neon Auth (BetterAuth compatible). The server validates incoming session tokens against Neon's published JWKS endpoint (`NEON_AUTH_JWKS_URL`), storing signed cookies locally while maintaining serverless auth state.
+
+### 3. Neon Object Storage (`src/lib/storage.ts` & `src/pages/api/avatar/upload.ts`)
+Avatar image uploads utilize `@aws-sdk/client-s3` connected to Neon's S3-compatible Object Storage endpoint (`AWS_ENDPOINT_URL_S3`). Uploads are processed with presigned URLs or direct Worker multipart streams.
+
+### 4. Governance Matrix (RBAC & ABAC)
+Integrated Role-Based Access Control (RBAC) and Attribute-Based Access Control (ABAC) policies evaluate incoming user permissions dynamically inside Astro middleware (`src/middleware.ts`).
+
+---
+
+## Real-Time Telemetry: Dev Trace Console (SSE)
+
+A key highlight of this repository is the universal **Dev Trace Console** (`DevTraceConsole.tsx`):
+
+- **Sticky Viewport Docking**: Positioned as `sticky bottom-0 z-50`, staying accessible at the bottom of the screen across both the public website and the webapp shell.
+- **Multi-Browser SSE Sync**: Log events generated in one browser tab are broadcast via `/api/dev-telemetry/emit` and streamed via Server-Sent Events (`/api/dev-telemetry/stream`) to all connected browser windows in real time.
+- **3-Tab Live Inspection**:
+  - 🌐 **Client & App Events**: SPA navigation, ClientRouter transitions, user actions.
+  - 🐘 **Neon Serverless Trace**: HTTP REST query payloads, execution timings, RLS status.
+  - ⛅ **Cloudflare Edge Trace**: Edge Colo location (e.g. `CGK - Jakarta`), CF-Ray IDs, SSR execution milliseconds.
+- **Resizable Console Drawer**: Draggable top border to adjust height dynamically from 160px to 650px.
+
+---
+
+## Known Caveat & Engine Issue (GitHub Issue #17868)
+
+During local development with `astro dev` and `@astrojs/cloudflare`, developers may encounter a specific runtime crash. We submitted a comprehensive report to `withastro/astro`:
+
+> 🐛 **GitHub Issue #17868**: `[bug] @astrojs/cloudflare dev runner panics workerd on SSR module resolution failure, breaking route registry`
+
+### Failure Mechanism (3-Step Domino Effect)
+
+1. **Unresolved Virtual Specifiers in `workerd`**:
+   During `astro dev`, `@astrojs/cloudflare` spawns a local `workerd` C++ subprocess. When Vite SSR passes unresolved dynamic aliases or virtual script queries (such as `<ClientRouter />`'s `ClientRouter.astro?astro&type=script`) into the V8 isolate, the C++ runtime throws an uncaught exception (`remote.jsg.Error: Unable to resolve ...`).
+2. **IPC Pipe Disconnection (`Broken Pipe`)**:
+   Because `@astrojs/cloudflare` does not catch this exception at the IPC socket boundary, `workerd` panics and abruptly closes the Unix socket pipe:
+   `kj/async-io-unix.c++:186: disconnected: ::write(fd, buffer.begin(), buffer.size()): Broken pipe`
+3. **Route Registry Collapse**:
+   Astro's `DevFacadeApp` (`getModuleForRoute` in `astro/dist/core/environment/production.js`) loses socket connection to `workerd`, clearing its route component map and causing subsequent requests to fail with:
+   `Error: Unexpectedly unable to find a component instance for route /`
+
+### Verified Production Workarounds
+
+To stabilize `astro dev` completely, our codebase implements the official triaged mitigations:
+
+1. **`ssr.optimizeDeps.noDiscovery = true`**: Prevents Vite 6 mid-flight dependency discovery from wiping `.vite/deps_ssr`.
+2. **Explicit Dependency Exclusion**: Excluding `@astrojs/preact`, `astro/actions`, `astro:actions`, and `astro/content` in `astro.config.mjs` under `vite.optimizeDeps.exclude` and `vite.ssr.optimizeDeps.exclude`.
+3. **Path Aliasing**: Resolving imports via `tsconfig.json` paths or relative imports for SSR routes.
+
+---
+
+## Clean Architecture & Import Aliasing Convention
+
+Following official Astro community best practices, path aliases are configured with a **Single Source of Truth** in `tsconfig.json`. Astro automatically inherits these paths into Vite without needing duplicate declarations in `astro.config.mjs`:
+
+```json
+{
+  "extends": "astro/tsconfigs/strictest",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@components/*": ["src/components/*"],
+      "@layouts/*": ["src/layouts/*"],
+      "@lib/*": ["src/lib/*"],
+      "@content/*": ["src/content/*"],
+      "@styles/*": ["src/styles/*"],
+      "@pages/*": ["src/pages/*"]
+    }
+  }
+}
+```
+
+### Layout Composition Architecture
+- **`BaseLayout.astro`**: Universal root shell (`<head>`, `<ClientRouter />`, CSS, `<DevTraceConsole />`).
+- **`Layout.astro`**: Public marketing & blog layout (composes `BaseLayout`).
+- **`AppLayout.astro`**: Webapp desktop app shell + native mobile UX (composes `BaseLayout`).
+- **`AuthLayout.astro`**: Full-screen ambient auth layout (composes `BaseLayout`).
+
+---
+
+## Tech Stack
 
 | Layer | Choice | Why |
-|-------|--------|-----|
+|---|---|---|
 | Framework | **Astro 7.2** | `prerender = false` per route, server islands, actions, sessions, route caching |
-| Runtime | **Cloudflare Workers** (`@astrojs/cloudflare` 14) | Pages support was removed; Workers + Assets is the official path |
-| Islands | **Preact** (via `@astrojs/preact`) | `client:load` for Todos & Search; `server:defer` server island |
-| Styling | **Tailwind CSS 4** (`@tailwindcss/vite`) | Utility-first, dark app shell |
-| Types | **TypeScript `strictest`** preset + `astro check` gating builds | `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`, etc. |
-| Validation | **`astro/zod`** (Zod 4) | Typed action inputs, typed content collections |
-| Deploy | **Wrangler** (`wrangler deploy`) | Generates `dist/server/wrangler.json` with auto-provisioned bindings |
+| Runtime | **Cloudflare Workers** (`@astrojs/cloudflare` 14) | Workers + Static Assets official target |
+| Database | **Neon Serverless Postgres** | HTTP/2 REST Data API, pooler connection, RLS security |
+| Auth | **Neon Auth (BetterAuth)** | JWT validation, JWKS endpoint, tabbed SPA auth modal |
+| Object Storage | **Neon Storage (S3)** | `@aws-sdk/client-s3` avatar image upload streams |
+| Islands | **Preact** (`@astrojs/preact`) | Interactivity (`TodoApp`, `SearchBox`, `DevTraceConsole`) |
+| Styling | **Tailwind CSS 4** (`@tailwindcss/vite`) | Utility-first styling with Vite integration |
+| Telemetry | **Server-Sent Events (SSE)** | Real-time cross-browser console log stream |
+| Types | **TypeScript `strictest`** | Gated builds via `astro check` |
 
 ---
 
-## Project structure
+## Project Structure
 
 ```text
 astrov7/
-├── public/                    # copied verbatim into dist/client
-│   ├── favicon.svg · favicon.ico
-│   └── _redirects             # 301 rewrite rules (Workers Assets)
+├── docs/
+│   ├── ARCHITECTURE.md          # Architectural deep-dive & rendering ladder
+│   └── DEPLOYMENT.md            # Cloudflare Workers deploy guide & troubleshooting
 ├── src/
-│   ├── actions/index.ts       # astro:actions: addTodo/toggleTodo/removeTodo
+│   ├── actions/index.ts         # astro:actions: addTodo/toggleTodo/removeTodo
 │   ├── components/
-│   │   ├── AppNav.astro       # webapp sidebar + mobile tab bar
-│   │   ├── CacheInfo.astro    # displays the emitted CDN cache policy
-│   │   ├── LiveStats.astro    # server island (server:defer)
-│   │   ├── Nav.astro          # public site navigation
-│   │   ├── PatternNote.astro  # inline "lesson" cards
-│   │   ├── SearchBox.tsx      # Preact island (client:load)
-│   │   ├── TodoApp.tsx        # Preact island (client:load)
-│   │   └── Welcome.astro
-│   ├── content.config.ts      # blog collection schema (astro/zod)
-│   ├── content/blog/*.md      # 3 static posts (Content Layer API)
-│   ├── fetch.ts               # Worker entrypoint via astro/fetch + FetchState
-│   ├── layouts/               # Layout.astro (site) · AppLayout.astro (app shell)
-│   ├── lib/http.ts            # fetchJsonWithTimeout (AbortController + typed errors)
+│   │   ├── AppNav.astro         # Webapp sidebar + mobile navigation
+│   │   ├── AuthForm.tsx         # Preact tabbed sign in / registration form
+│   │   ├── CacheInfo.astro      # CDN cache headers display
+│   │   ├── DevTraceConsole.tsx  # Universal sticky SSE telemetry console
+│   │   ├── LiveStats.astro      # Server island (server:defer)
+│   │   ├── Nav.astro            # Public website navigation
+│   │   ├── NeonDataApiShowcase.tsx # Live HTTP REST query runner
+│   │   ├── PatternNote.astro    # Architectural pattern cards
+│   │   ├── ProfileEditor.tsx    # User profile & avatar editor
+│   │   ├── RbacAbacManager.tsx  # Governance matrix manager
+│   │   ├── SearchBox.tsx        # Debounced Preact search island
+│   │   └── TodoApp.tsx          # KV-persisted task list island
+│   ├── content/blog/*.md        # Static Markdown blog posts
+│   ├── layouts/
+│   │   ├── BaseLayout.astro     # Universal root shell layout
+│   │   ├── Layout.astro         # Public website layout
+│   │   ├── AppLayout.astro      # Webapp workspace layout
+│   │   └── AuthLayout.astro     # Ambient auth page layout
+│   ├── lib/
+│   │   ├── http.ts              # AbortController fetch wrapper
+│   │   ├── neon.ts              # Neon Data API & Auth helpers
+│   │   ├── storage.ts           # S3 Object Storage client
+│   │   ├── syntaxHighlight.ts   # Prism syntax highlighter
+│   │   └── telemetry.ts         # SSE event emitter & client registry
 │   ├── pages/
 │   │   ├── index.astro · 404.astro
-│   │   ├── app/index.astro · weather.astro · todos.astro · search.astro
-│   │   ├── api/weather.ts · search.ts · revalidate.ts
-│   │   └── blog/index.astro · blog/[slug].astro
-│   └── styles/global.css
-├── astro.config.mjs           # adapter, sessions, cache provider, routeRules
-├── wrangler.jsonc             # Worker config: assets, compatibility, observability
-├── tsconfig.json              # astro/tsconfigs/strictest + astro ts-plugin
-├── .env.example               # env var conventions (astro:env)
-└── worker-configuration.d.ts  # generated by `wrangler types`
+│   │   ├── auth/index.astro     # Neon Auth SPA route
+│   │   ├── app/                 # overview, weather, todos, search, profile, settings, neon-api
+│   │   ├── api/                 # weather, search, revalidate, auth, dev-telemetry, avatar
+│   │   └── blog/                # index, [slug]
+│   ├── middleware.ts            # RBAC/ABAC middleware & session guard
+│   └── styles/global.css        # Tailwind 4 theme
+├── astro.config.mjs             # Adapter, sessions, cache provider, routeRules
+├── wrangler.jsonc               # Worker bindings (ASSETS, SESSION KV, IMAGES, vars)
+├── tsconfig.json                # Single Source of Truth path aliases
+├── .env.example                 # Environment variables reference
+└── worker-configuration.d.ts    # Generated Wrangler type declarations
 ```
 
 ---
 
-## Getting started
+## Getting Started
 
-Requires **Node ≥ 22.12** (Astro 7) and a Cloudflare account (free).
+Requires **Node ≥ 22.12** (Astro 7) and a Cloudflare account (free tier).
 
 ```sh
-# 1. install (repo is set up for Bun, but works with any package manager)
+# 1. Install dependencies
 bun install
 
-# 2. start the dev server against local workerd bindings
-bun run dev          # → localhost:4321 (generates worker-configuration.d.ts first)
+# 2. Start dev server (generates worker-configuration.d.ts & boots astro dev)
+bun run dev          # → http://localhost:4321
 
-# 3. type-check + build
+# 3. Type-check (0 errors, 0 warnings requirement)
+bun run check        # astro check
+
+# 4. Production Build
 bun run build        # astro check && astro build → dist/
 
-# 4. deploy to Cloudflare Workers (or run `cf:build` to skip deploy)
+# 5. Deploy to Cloudflare Workers
 bun run cf:deploy    # wrangler types && astro check && astro build && wrangler deploy
 ```
 
-| Script | Action |
-|--------|--------|
-| `bun run dev` | `wrangler types && astro dev` |
-| `bun run check` | `astro check` (0 warnings/0 errors goal) |
-| `bun run build` | `astro check && astro build` |
-| `bun run preview` | `astro preview` |
-| `bun run cf:build` | `wrangler types && astro check && astro build` |
-| `bun run cf:deploy` | full build + `wrangler deploy --config dist/server/wrangler.json` |
-| `bun run cf:preview` | `wrangler types && astro preview` (workerd runtime) |
-
 ---
 
-## Cloudflare-specifics
+## Cloudflare & Environment Configuration
 
 ### `wrangler.jsonc`
-
 ```jsonc
 {
   "name": "astrov7",
@@ -191,114 +294,47 @@ bun run cf:deploy    # wrangler types && astro check && astro build && wrangler 
     "directory": "./dist",
     "not_found_handling": "404-page"
   },
-  "observability": { "enabled": true }
+  "kv_namespaces": [
+    {
+      "binding": "SESSION",
+      "id": "astrov7_dev_session_kv"
+    }
+  ],
+  "vars": {
+    "PUBLIC_NEON_DATA_API_URL": "https://ep-sample.apirest.us-east-2.aws.neon.tech/neondb/rest/v1",
+    "PUBLIC_NEON_AUTH_URL": "https://ep-sample.neonauth.us-east-2.aws.neon.tech/neondb/auth"
+  }
 }
 ```
-
-Notable pieces:
-
-- **`assets.not_found_handling: "404-page"`** — serves `dist/client/404.html` on unknown paths
-  (required for custom 404 on Worker Assets; default returns a bare 404).
-- **`nodejs_compat`** — lets you use Node-flavored APIs on the Worker.
-- **Auto-provisioned bindings** — the adapter injects `SESSION` KV + `IMAGES` at build/deploy;
-  you see them in `dist/server/wrangler.json`.
-
-### `astro.config.mjs`
-
-```js
-export default defineConfig({
-  output: 'static', // ← default; on-demand pages opt in individually
-  env: { schema: {} }, // astro:env (type-safe env, add envField entries as needed)
-  session: { ttl: 60 * 60 * 24 * 7, cookie: 'astrov7-session' }, // encrypted KV sessions
-  cache: { provider: cacheCloudflare() }, // Cloudflare worker cache provider
-  routeRules: { '/api/search': { swr: 60 } }, // CDN-level SWR for the search endpoint
-  integrations: [preact()],
-  adapter: cloudflare({ imageService: { build: 'compile', runtime: 'cloudflare-binding' } }),
-});
-```
-
-### `src/fetch.ts` — advanced routing
-
-The adapter supports Astro 7's advanced routing: this `src/fetch.ts` becomes the Worker entrypoint,
-yet you still write ordinary pages/endpoints above it.
-
-```ts
-import { astro, FetchState } from 'astro/fetch';
-
-export default {
-  async fetch(request: Request, _env: Env, _ctx: ExecutionContext) {
-    const state = new FetchState(request);
-    return astro(state);
-  },
-} satisfies ExportedHandler<Env>;
-```
-
-### Environment & secrets
-
-- `.env` for `astro dev` local vars; `.dev.vars` (git-ignored) for `wrangler dev` secrets.
-- Production secrets: `wrangler secret put <KEY>` → read via `astro:env/server` once added to
-  `env.schema`. `PUBLIC_*` vars are inlined for the client. See `.env.example`.
 
 ---
 
 ## Deployment
 
-```sh
-# one-command deploy (types → check → build → deploy)
-bun run cf:deploy
+Deploying to Cloudflare Workers is handled via a single command:
 
-# or step by step
-wrangler login                                  # authenticate as your Cloudflare account
-bun run cf:build
-wrangler deploy --config dist/server/wrangler.json
+```sh
+bun run cf:deploy
 ```
 
-- Deploys **7 files** (JS entry + assets) to your `*.workers.dev` domain.
-- **CI/CD**: hook up [Workers Builds](https://developers.cloudflare.com/workers/ci-cd/builds/)
-  with build command `bun run cf:build` and deploy command `wrangler deploy --config dist/server/wrangler.json`.
-
-> ⚠️ Free-tier note for SSG-heavy Rust-compiled builds: keep an eye on the free **10 ms CPU per
-> invocation** — the static half never touches the Worker, but a complex SSR page can use several ms.
-
----
-
-## The data-fetch hierarchy
-
-This repo is also a graded walk-through of "how much server work should a route do?":
-
-1. **Build-time (SSG)** — `/`, `/blog/*`: nothing runs at request time.
-2. **Content collections** — typed Markdown, generated once during build.
-3. **On-demand page + upstream fetch** — `/app/weather`: `await fetch()` in frontmatter, streamed.
-4. **Page-level route caching** — `Astro.cache.set({ maxAge, swr, tags })` → served from the edge.
-5. **Client island → cached API** — `/app/search` + `/api/search`: debounce + AbortController.
-6. **`astro:actions` mutations** — server-validated by Zod, returns fresh state.
-7. **Sessions in KV** — encrypted, cookie-bound per-user storage.
-8. **Cache invalidation** — `/api/revalidate` purges tags globally.
-
-Each is explained inline on its page via `<PatternNote>` cards.
+This executes the full automated pipeline:
+1. `wrangler types` — generates `worker-configuration.d.ts` for typed bindings.
+2. `astro check` — verifies 100% type safety across all Astro, Preact, and TS files.
+3. `astro build` — compiles static assets to `dist/client` and Worker entrypoints to `dist/server`.
+4. `wrangler deploy` — publishes the bundle to Cloudflare's global edge network.
 
 ---
 
-## Docs
+## Roadmap & Integration Slots (Sanity, Sentry, Payload CMS)
 
-| File | Contents |
-|------|----------|
-| [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | Rendering model, data-fetch hierarchy, caching, sessions, images, env & TS deep dive |
-| [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) | Authenticating, deploy commands, CI/CD, secrets, custom domains, troubleshooting |
+This repository is designed to evolve into an international multi-CMS and observability benchmark for Astro v7 edge deployments:
 
----
-
-## Roadmap / slots for your own experiments
-
-Everything below fits the same stack and is intentionally left open:
-
-- **D1** database-backed CRUD (rows-read friendly on the free plan, `import { env } from 'cloudflare:workers'`).
-- **R2** user uploads (10 GB free, free egress).
-- **Durable Objects** (SQLite-backed) for realtime/WebSocket state.
-- **Workers AI + Vectorize** for RAG / semantic search.
-- **Turnstile** captcha on the action forms.
+- [ ] **Sanity.io Integration (Primary Headless CMS Benchmark)**: Structured headless CMS content fetching with GROQ queries, live visual preview, and edge caching.
+- [ ] **Payload CMS (Optional Headless CMS Alternative)**: Serverless Node/Postgres headless CMS integration alternative backed by Neon Postgres.
+- [ ] **Sentry Edge Observability**: Automated edge error tracking, trace context propagation, and performance monitoring for Cloudflare Workers.
+- [ ] **Turnstile Captcha**: Cloudflare Turnstile integration on authentication and action forms.
+- [ ] **Workers AI & Vectorize**: Edge RAG embeddings & semantic search integration.
 
 ---
 
-> Built as a reference for the community. PRs/issues welcome — the goal is to keep this repo a
-> living example of Astro v7 + Cloudflare best practices on the free tier.
+> Built as an open reference for the global developer community. Pull requests and issues are welcome — our goal is to maintain this repository as a living benchmark for Astro v7, Cloudflare Workers, and Neon Serverless architecture.

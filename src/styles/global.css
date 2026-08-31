@@ -19,6 +19,24 @@
 	}
 }
 
+/* Custom Scrollbar for Dev Trace Console Log Stream */
+.console-log-stream::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+.console-log-stream::-webkit-scrollbar-track {
+	background: rgba(24, 24, 27, 0.8);
+	border-radius: 4px;
+}
+.console-log-stream::-webkit-scrollbar-thumb {
+	background: rgba(99, 102, 241, 0.6);
+	border-radius: 4px;
+	border: 2px solid rgba(24, 24, 27, 0.8);
+}
+.console-log-stream::-webkit-scrollbar-thumb:hover {
+	background: rgba(99, 102, 241, 1);
+}
+
 @layer components {
 	.prose-demo {
 		@apply text-sm;
@@ -38,13 +56,13 @@
 	.prose-demo a {
 		@apply text-indigo-400 underline underline-offset-2 hover:text-indigo-300;
 	}
-	.prose-demo pre {
-		@apply my-4 overflow-x-auto rounded-lg border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-200;
+	.prose-demo pre, pre.shiki {
+		@apply my-4 overflow-x-auto rounded-xl border border-zinc-800/80 bg-zinc-950 p-4 font-mono text-xs text-zinc-200 leading-relaxed shadow-md;
 	}
 	.prose-demo code {
-		@apply rounded bg-zinc-800 px-1 py-0.5 font-mono text-[0.85em] text-indigo-200;
+		@apply rounded-md border border-zinc-800 bg-zinc-900 px-1.5 py-0.5 font-mono text-[0.85em] text-indigo-300 font-medium;
 	}
-	.prose-demo pre code {
-		@apply bg-transparent p-0 text-zinc-200;
+	.prose-demo pre code, pre.shiki code {
+		@apply border-0 bg-transparent p-0 text-zinc-200 font-mono text-xs;
 	}
 }
