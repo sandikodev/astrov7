@@ -6,15 +6,32 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
+    "dev": "wrangler types && astro dev",
+    "build": "astro check && astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "check": "astro check",
+    "cf:build": "wrangler types && astro check && astro build",
+    "cf:deploy": "wrangler types && astro check && astro build && wrangler deploy --config dist/server/wrangler.json",
+    "cf:preview": "wrangler types && astro preview",
+    "cf:types": "wrangler types"
   },
   "dependencies": {
-    "astro": "^7.2.9"
+    "@astrojs/cloudflare": "^14.2.5",
+    "@astrojs/preact": "^6.0.4",
+    "@tailwindcss/vite": "^4.3.3",
+    "astro": "^7.2.9",
+    "preact": "^10.29.8",
+    "tailwindcss": "^4.3.3"
   },
   "allowScripts": {
     "esbuild": true
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@astrojs/ts-plugin": "^1.10.11",
+    "@types/node": "^26.4.0",
+    "typescript": "6.0.3",
+    "wrangler": "^4.127.1"
   }
 }
