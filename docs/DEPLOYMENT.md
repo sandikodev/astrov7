@@ -69,7 +69,7 @@ bun run cf:build
 npx wrangler deploy --config dist/server/wrangler.json
 ```
 
-You'll get a live URL like `https://astrov7.asib.workers.dev`.
+You'll get a live URL like `https://astrov7.sandikodev.workers.dev`.
 
 The `astrov7` worker is provisioned with:
 
@@ -138,8 +138,8 @@ Once your repo lives on GitHub (e.g. `sandikodev/astrov7`), run:
 
 ```sh
 gh repo edit \
-  --description "Astro v7 + Cloudflare Workers reference: static website + on-demand webapp in one deploy (sessions, actions, route caching, server islands). Live: https://astrov7.asib.workers.dev" \
-  --homepage "https://astrov7.asib.workers.dev" \
+  --description "Astro v7 + Cloudflare Workers reference: static website + on-demand webapp in one deploy (sessions, actions, route caching, server islands). Live: https://astrov7.sandikodev.workers.dev" \
+  --homepage "https://astrov7.sandikodev.workers.dev" \
   --add-topic astro --add-topic astrojs --add-topic astro-7 \
   --add-topic cloudflare --add-topic cloudflare-workers --add-topic workers \
   --add-topic typescript --add-topic preact --add-topic tailwindcss \

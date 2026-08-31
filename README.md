@@ -4,7 +4,7 @@
 > on-demand *webapp*, deployed together on **Cloudflare Workers with Workers Static Assets**.
 > Built to serve as a community reference for production-grade Astro v7 patterns on Cloudflare's free tier.
 
-**Live demo** → https://astrov7.asib.workers.dev
+**Live demo** → https://astrov7.sandikodev.workers.dev
 
 ![Astro v7](https://img.shields.io/badge/Astro-7.2-FF5D01?logo=astro&logoColor=white)
 ![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-orange?logo=cloudflare&logoColor=white)
