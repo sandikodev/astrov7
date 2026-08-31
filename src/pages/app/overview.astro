@@ -1,0 +1,109 @@
+---
+// Webapp hub — on-demand dynamic dashboard streaming from Cloudflare Worker.
+export const prerender = false;
+import AppLayout from '@/layouts/AppLayout.astro';
+
+const now = new Date().toISOString();
+---
+
+<AppLayout title="Webapp Overview" description="Native App Shell & Module Dashboard" live>
+	{/* Top Stats Banner */}
+	<div class="mb-6 rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 font-mono text-xs text-zinc-300">
+		<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+			<div class="flex items-center gap-2 text-zinc-200 font-semibold">
+				<span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+				Worker Runtime Status: Active
+			</div>
+			<div class="text-[11px] text-zinc-400">
+				Rendered at <span class="text-zinc-200">{now}</span>
+			</div>
+		</div>
+		<p class="mt-2.5 text-zinc-400 text-xs font-sans leading-relaxed">
+			Select a module below to test different data-fetching patterns.
+		</p>
+	</div>
+
+	{/* Modules Grid */}
+	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+		{/* Weather Module Card */}
+		<a
+			href="/app/weather"
+			class="group flex flex-col justify-between rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 transition hover:border-zinc-700 hover:bg-zinc-900/60"
+		>
+			<div>
+				<div class="flex items-center justify-between">
+					<div class="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-800 text-zinc-300 border border-zinc-700/80">
+						<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
+						</svg>
+					</div>
+					<span class="rounded bg-zinc-800 px-2 py-0.5 font-mono text-[10px] text-zinc-300">
+						SSR + Cache
+					</span>
+				</div>
+				<h2 class="mt-3.5 text-base font-semibold text-white group-hover:text-zinc-200 transition">Weather</h2>
+				<p class="mt-1.5 text-xs text-zinc-400 leading-relaxed">
+					Server-side upstream fetch + Cloudflare route caching + server island component.
+				</p>
+			</div>
+			<div class="mt-5 flex items-center justify-between pt-3 border-t border-zinc-800/60 text-xs font-medium text-zinc-400 group-hover:text-white transition">
+				<span>Open module</span>
+				<span class="group-hover:translate-x-1 transition">→</span>
+			</div>
+		</a>
+
+		{/* Todos Module Card */}
+		<a
+			href="/app/todos"
+			class="group flex flex-col justify-between rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 transition hover:border-zinc-700 hover:bg-zinc-900/60"
+		>
+			<div>
+				<div class="flex items-center justify-between">
+					<div class="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-800 text-zinc-300 border border-zinc-700/80">
+						<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+						</svg>
+					</div>
+					<span class="rounded bg-zinc-800 px-2 py-0.5 font-mono text-[10px] text-zinc-300">
+						KV Sessions
+					</span>
+				</div>
+				<h2 class="mt-3.5 text-base font-semibold text-white group-hover:text-zinc-200 transition">Todos</h2>
+				<p class="mt-1.5 text-xs text-zinc-400 leading-relaxed">
+					<code class="text-zinc-200 font-mono">astro:actions</code> mutations + per-user encrypted session storage in Cloudflare KV.
+				</p>
+			</div>
+			<div class="mt-5 flex items-center justify-between pt-3 border-t border-zinc-800/60 text-xs font-medium text-zinc-400 group-hover:text-white transition">
+				<span>Open module</span>
+				<span class="group-hover:translate-x-1 transition">→</span>
+			</div>
+		</a>
+
+		{/* Search Module Card */}
+		<a
+			href="/app/search"
+			class="group flex flex-col justify-between rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 transition hover:border-zinc-700 hover:bg-zinc-900/60 sm:col-span-2 lg:col-span-1"
+		>
+			<div>
+				<div class="flex items-center justify-between">
+					<div class="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-800 text-zinc-300 border border-zinc-700/80">
+						<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+						</svg>
+					</div>
+					<span class="rounded bg-zinc-800 px-2 py-0.5 font-mono text-[10px] text-zinc-300">
+						Preact + CDN
+					</span>
+				</div>
+				<h2 class="mt-3.5 text-base font-semibold text-white group-hover:text-zinc-200 transition">Search</h2>
+				<p class="mt-1.5 text-xs text-zinc-400 leading-relaxed">
+					Debounced Preact client island calling a route-cached API endpoint with tag invalidation.
+				</p>
+			</div>
+			<div class="mt-5 flex items-center justify-between pt-3 border-t border-zinc-800/60 text-xs font-medium text-zinc-400 group-hover:text-white transition">
+				<span>Open module</span>
+				<span class="group-hover:translate-x-1 transition">→</span>
+			</div>
+		</a>
+	</div>
+</AppLayout>

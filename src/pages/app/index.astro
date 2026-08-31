@@ -1,109 +1,81 @@
 ---
-// Webapp hub — on-demand dynamic dashboard streaming from Cloudflare Worker.
+// Webapp Entry Splash — branded loader that redirects the user to the app hub (/app/overview) after a few seconds.
 export const prerender = false;
-import AppLayout from '@/layouts/AppLayout.astro';
+import '@/styles/global.css';
 
-const now = new Date().toISOString();
+const target = '/app/overview';
+const delay = 3200;
 ---
 
-<AppLayout title="Webapp Overview" description="Native App Shell & Module Dashboard" live>
-	{/* Top Stats Banner */}
-	<div class="mb-6 rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 font-mono text-xs text-zinc-300">
-		<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-			<div class="flex items-center gap-2 text-zinc-200 font-semibold">
-				<span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
-				Worker Runtime Status: Active
+<!doctype html>
+<html lang="en" class="dark">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+		<meta name="generator" content={Astro.generator} />
+		<meta name="description" content="Astro v7 webapp simulation — launching workspace" />
+		<meta name="color-scheme" content="dark" />
+		<meta name="robots" content="noindex" />
+		<meta http-equiv="refresh" content={`${Math.round(delay / 1000)}; url=${target}`} />
+		<title>Webapp — Launching</title>
+	</head>
+	<body class="bg-zinc-950 text-zinc-100 selection:bg-zinc-800 selection:text-white antialiased min-h-screen flex items-center justify-center px-6">
+		<main class="flex w-full max-w-sm flex-col items-center text-center">
+			{/* Brand Mark */}
+			<div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-100 font-mono text-lg font-bold text-zinc-950 shadow-[0_0_40px_rgba(255,255,255,0.08)]">
+				v7
 			</div>
-			<div class="text-[11px] text-zinc-400">
-				Rendered at <span class="text-zinc-200">{now}</span>
-			</div>
-		</div>
-		<p class="mt-2.5 text-zinc-400 text-xs font-sans leading-relaxed">
-			Select a module below to test different data-fetching patterns.
-		</p>
-	</div>
 
-	{/* Modules Grid */}
-	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-		{/* Weather Module Card */}
-		<a
-			href="/app/weather"
-			class="group flex flex-col justify-between rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 transition hover:border-zinc-700 hover:bg-zinc-900/60"
-		>
-			<div>
-				<div class="flex items-center justify-between">
-					<div class="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-800 text-zinc-300 border border-zinc-700/80">
-						<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
-						</svg>
-					</div>
-					<span class="rounded bg-zinc-800 px-2 py-0.5 font-mono text-[10px] text-zinc-300">
-						SSR + Cache
-					</span>
+			<h1 class="mt-6 text-lg font-semibold tracking-tight text-white">Webapp Shell</h1>
+			<p class="mt-1 text-xs text-zinc-400 font-mono">Cloudflare Workers Runtime</p>
+
+			{/* Loader + redirect */}
+			<div class="mt-10 flex w-full flex-col items-center gap-3">
+				<div
+					class="h-1 w-40 overflow-hidden rounded-full bg-zinc-800"
+					role="progressbar"
+					aria-label="Launching webapp"
+				>
+					<div id="fill" class="h-full w-0 rounded-full bg-emerald-400 transition-[width]"></div>
 				</div>
-				<h2 class="mt-3.5 text-base font-semibold text-white group-hover:text-zinc-200 transition">Weather</h2>
-				<p class="mt-1.5 text-xs text-zinc-400 leading-relaxed">
-					Server-side upstream fetch + Cloudflare route caching + server island component.
+				<p class="font-mono text-[11px] text-zinc-500">
+					Launching modules<span id="dots">…</span>
 				</p>
 			</div>
-			<div class="mt-5 flex items-center justify-between pt-3 border-t border-zinc-800/60 text-xs font-medium text-zinc-400 group-hover:text-white transition">
-				<span>Open module</span>
-				<span class="group-hover:translate-x-1 transition">→</span>
-			</div>
-		</a>
 
-		{/* Todos Module Card */}
-		<a
-			href="/app/todos"
-			class="group flex flex-col justify-between rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 transition hover:border-zinc-700 hover:bg-zinc-900/60"
-		>
-			<div>
-				<div class="flex items-center justify-between">
-					<div class="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-800 text-zinc-300 border border-zinc-700/80">
-						<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-						</svg>
-					</div>
-					<span class="rounded bg-zinc-800 px-2 py-0.5 font-mono text-[10px] text-zinc-300">
-						KV Sessions
-					</span>
-				</div>
-				<h2 class="mt-3.5 text-base font-semibold text-white group-hover:text-zinc-200 transition">Todos</h2>
-				<p class="mt-1.5 text-xs text-zinc-400 leading-relaxed">
-					<code class="text-zinc-200 font-mono">astro:actions</code> mutations + per-user encrypted session storage in Cloudflare KV.
-				</p>
-			</div>
-			<div class="mt-5 flex items-center justify-between pt-3 border-t border-zinc-800/60 text-xs font-medium text-zinc-400 group-hover:text-white transition">
-				<span>Open module</span>
-				<span class="group-hover:translate-x-1 transition">→</span>
-			</div>
-		</a>
+			<a
+				href={target}
+				class="mt-8 inline-flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800 hover:text-white transition"
+			>
+				Open Overview
+				<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 12h14"/>
+				</svg>
+			</a>
+		</main>
 
-		{/* Search Module Card */}
-		<a
-			href="/app/search"
-			class="group flex flex-col justify-between rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 transition hover:border-zinc-700 hover:bg-zinc-900/60 sm:col-span-2 lg:col-span-1"
-		>
-			<div>
-				<div class="flex items-center justify-between">
-					<div class="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-800 text-zinc-300 border border-zinc-700/80">
-						<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-						</svg>
-					</div>
-					<span class="rounded bg-zinc-800 px-2 py-0.5 font-mono text-[10px] text-zinc-300">
-						Preact + CDN
-					</span>
-				</div>
-				<h2 class="mt-3.5 text-base font-semibold text-white group-hover:text-zinc-200 transition">Search</h2>
-				<p class="mt-1.5 text-xs text-zinc-400 leading-relaxed">
-					Debounced Preact client island calling a route-cached API endpoint with tag invalidation.
-				</p>
-			</div>
-			<div class="mt-5 flex items-center justify-between pt-3 border-t border-zinc-800/60 text-xs font-medium text-zinc-400 group-hover:text-white transition">
-				<span>Open module</span>
-				<span class="group-hover:translate-x-1 transition">→</span>
-			</div>
-		</a>
-	</div>
-</AppLayout>
+		<script is:inline>
+			const target = '/app/overview';
+			const delay = 3200;
+			const fill = document.getElementById('fill');
+			const dots = document.getElementById('dots');
+
+			fill.style.width = '100%';
+			fill.style.transitionDuration = delay + 'ms';
+
+			// Animated ellipsis while loading
+			let tick = 0;
+			const anim = window.setInterval(() => {
+				tick = (tick + 1) % 4;
+				dots.textContent = '…'.slice(0, tick + 1);
+			}, 400);
+
+			window.setTimeout(() => {
+				window.clearInterval(anim);
+				window.location.replace(target);
+			}, delay);
+		</script>
+	</body>
+</html>

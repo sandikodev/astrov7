@@ -4,7 +4,7 @@ const pathname = Astro.url.pathname;
 
 const desktopNavItems = [
 	{
-		href: '/app',
+		href: '/app/overview',
 		exact: true,
 		label: 'Overview',
 		shortLabel: 'Hub',
@@ -43,7 +43,7 @@ function isItemActive(item: typeof desktopNavItems[0]) {
 	return pathname.startsWith(item.href);
 }
 
-const isSubRoute = pathname !== '/app';
+const isSubRoute = pathname !== '/app/overview';
 const isSearchPage = pathname.startsWith('/app/search');
 ---
 
@@ -105,7 +105,7 @@ const isSearchPage = pathname.startsWith('/app/search');
 		<div class="flex items-center gap-2">
 			{isSubRoute ? (
 				<a
-					href="/app"
+					href="/app/overview"
 					aria-label="Back to Webapp Hub"
 					class="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-300 hover:text-white transition"
 				>
