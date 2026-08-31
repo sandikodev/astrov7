@@ -32,8 +32,8 @@ const serverTrace = Astro.locals.serverTrace;
 		<meta name="description" content={description} />
 		<meta name="color-scheme" content="dark" />
 		<title>{title}</title>
-		{/* Enable ClientRouter for instant SPA client transitions */}
-		<ClientRouter />
+		{/* Disable ClientRouter temporarily to prevent workerd IPC Broken pipe panic (Issue #17868) */}
+		{/* <ClientRouter /> */}
 	</head>
 	<body class={bodyClass}>
 		<slot />

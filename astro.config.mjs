@@ -30,59 +30,16 @@ export default defineConfig({
 	}),
 	vite: {
 		plugins: [tailwindcss()],
-		resolve: {
-			dedupe: ['preact', 'preact/hooks', 'preact/compat'],
-		},
-		optimizeDeps: {
-			include: [
-				'preact',
-				'preact/hooks',
-				'preact/compat',
-				'preact/devtools',
-				'preact/debug',
-				'preact/jsx-runtime',
-				'preact-render-to-string',
-			],
-			exclude: [
-				'@astrojs/cloudflare',
-				'@astrojs/preact',
-				'@astrojs/preact/server.js',
-				'astro',
-				'astro/actions',
-				'astro:actions',
-				'astro/actions/runtime/entrypoints/server.js',
-				'astro/content',
-				'astro:content',
-				'astro/components/ClientRouter.astro',
-				'astro/runtime/server/index.js',
-			],
-		},
 		ssr: {
 			optimizeDeps: {
 				noDiscovery: true,
 				exclude: [
 					'@astrojs/cloudflare',
 					'@astrojs/preact',
-					'@astrojs/preact/server.js',
 					'astro',
-					'astro/actions',
-					'astro:actions',
-					'astro/actions/runtime/entrypoints/server.js',
-					'astro/content',
-					'astro:content',
-					'astro/components/ClientRouter.astro',
-					'astro/runtime/server/index.js',
+					'astro:actions'
 				],
 			},
-			noExternal: [
-				'preact',
-				'preact/hooks',
-				'preact/compat',
-				'preact/devtools',
-				'preact/debug',
-				'preact/jsx-runtime',
-				'preact-render-to-string',
-			],
 		},
 	},
 });
