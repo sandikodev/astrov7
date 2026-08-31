@@ -1,0 +1,34 @@
+---
+/**
+ * Displays cache metadata inline with clean neutral badges.
+ */
+interface Props {
+	tags?: string[];
+	maxAge?: number;
+	swr?: number;
+	status?: string;
+}
+
+const { tags = [], maxAge, swr, status } = Astro.props;
+---
+
+<div class="mt-4 flex flex-wrap gap-2 text-xs font-mono text-zinc-400">
+	{status && (
+		<span class="rounded bg-zinc-900 border border-zinc-800 px-2 py-1 text-zinc-300">{status}</span>
+	)}
+	{maxAge !== undefined && (
+		<span class="rounded bg-zinc-900 border border-zinc-800 px-2 py-1 text-zinc-400">
+			max-age: {maxAge}s
+		</span>
+	)}
+	{swr !== undefined && (
+		<span class="rounded bg-zinc-900 border border-zinc-800 px-2 py-1 text-zinc-400">
+			swr: {swr}s
+		</span>
+	)}
+	{tags.length > 0 && (
+		<span class="rounded bg-zinc-900 border border-zinc-800 px-2 py-1 text-zinc-400">
+			tags: [{tags.join(', ')}]
+		</span>
+	)}
+</div>

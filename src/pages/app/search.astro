@@ -1,0 +1,76 @@
+---
+// On-demand page: client island → route-cached API → external upstream. Plus tag invalidation.
+export const prerender = false;
+import AppLayout from '@/layouts/AppLayout.astro';
+import SearchBox from '@/components/SearchBox.tsx';
+import PatternNote from '@/components/PatternNote.astro';
+import CacheInfo from '@/components/CacheInfo.astro';
+---
+
+<AppLayout title="Search Module" description="Preact client island + Cloudflare CDN route caching" live>
+	<p class="mb-6 text-xs sm:text-sm text-zinc-400 leading-relaxed">
+		Type to search live data. The Preact island debounces input by 300ms and calls{' '}
+		<code class="rounded bg-zinc-900 px-1.5 py-0.5 font-mono text-xs text-zinc-200">/api/search</code>, whose responses are edge-cached by Cloudflare CDN. Submitting identical queries yields <code class="text-zinc-200 font-mono">cf-cache-status: HIT</code>.
+	</p>
+
+	<div class="rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 sm:p-6">
+		<SearchBox client:load />
+	</div>
+
+	<CacheInfo status="Cloudflare-CDN-Cache-Control" maxAge={300} swr={60} tags={['search']} />
+
+	{/* Clean Developer Action Card */}
+	<div class="mt-6 rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 sm:p-6">
+		<h2 class="text-sm font-semibold text-zinc-200">Cache Invalidation</h2>
+		<p class="mt-1 text-xs sm:text-sm leading-relaxed text-zinc-400">
+			POSTing JSON to <code class="rounded bg-zinc-950 px-1.5 py-0.5 font-mono text-xs text-zinc-300">/api/revalidate</code> executes{' '}
+			<code class="rounded bg-zinc-950 px-1.5 py-0.5 font-mono text-xs text-zinc-300">context.cache.invalidate({`{ tags: [...] }`})</code> to purge edge entries.
+		</p>
+
+		<form
+			method="post"
+			action="/api/revalidate"
+			class="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3"
+			data-encoded
+		>
+			<input type="hidden" name="payload" value={"{\"tags\":[\"search\",\"weather\"]}"} />
+			<button
+				type="submit"
+				class="rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-700 hover:text-white transition shadow-sm cursor-pointer"
+			>
+				Purge Cache Tags
+			</button>
+			<span class="text-xs text-zinc-500 font-sans">
+				Re-run search afterwards to trigger a fresh worker render.
+			</span>
+		</form>
+
+		<script is:inline define:vars={{ payload: '{"tags":["search","weather"]}' }}>
+			document.querySelector('form[data-encoded]')?.addEventListener('submit', (e) => {
+				e.preventDefault();
+				fetch('/api/revalidate', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: payload,
+				})
+					.then((r) => r.json())
+					.then((json) => alert('Purge response:\n' + JSON.stringify(json, null, 2)));
+			});
+		</script>
+	</div>
+
+	<div class="mt-8 space-y-3">
+		<PatternNote
+			number={1}
+			title="Client island fetch hygiene"
+			description="AbortController cancels previous requests on keystroke; 300ms debounce defers work; loading/error/empty states are explicitly handled."
+			code={`fetch('/api/search?q=…', { signal })\n  .then(r => r.json())\n  .catch(err => { if (err.name === 'AbortError') return; … })`}
+		/>
+		<PatternNote
+			number={2}
+			title="Route-cached API endpoint"
+			description="First query miss reaches Worker -> upstream. Cache hits within maxAge return directly from Cloudflare's CDN."
+			code={`// astro.config.mjs\nrouteRules: { '/api/search': { swr: 60 } }\n// src/pages/api/search.ts\ncontext.cache.set({ maxAge: 300, swr: 60, tags: ['search'] });`}
+		/>
+	</div>
+</AppLayout>

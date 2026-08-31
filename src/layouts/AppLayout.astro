@@ -1,0 +1,74 @@
+---
+// Webapp Layout — Fixed 1-Screen Viewport Desktop App Shell + Native Mobile Layout
+import '@/styles/global.css';
+import AppNav from '@/components/AppNav.astro';
+
+interface Props {
+	title: string;
+	description?: string;
+	live?: boolean;
+}
+
+const {
+	title,
+	description = 'Astro v7 webapp simulation',
+	live = true,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en" class="dark">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+		<meta name="generator" content={Astro.generator} />
+		<meta name="description" content={description} />
+		<meta name="color-scheme" content="dark" />
+		<meta name="robots" content="noindex" />
+		<title>{title}</title>
+	</head>
+	<body class="bg-zinc-950 text-zinc-100 selection:bg-zinc-800 selection:text-white antialiased min-h-screen">
+		{/* Native App Layout Container — Fixed 100vh viewport on Desktop */}
+		<div class="flex flex-col md:flex-row md:h-screen md:max-h-screen md:overflow-hidden">
+			{/* Webapp Navigation */}
+			<AppNav />
+
+			{/* Main App Workspace Content Column */}
+			<div class="flex flex-1 flex-col min-w-0 md:h-screen md:max-h-screen md:overflow-hidden">
+				{/* Inner Scrollable Workspace Area */}
+				<div class="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-12 md:pb-8">
+					<main class="w-full max-w-5xl mx-auto">
+						{/* App Header Banner */}
+						<header class="mb-6 pb-6 border-b border-zinc-800/80">
+							<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+								<div>
+									<h1 class="text-xl sm:text-2xl font-bold tracking-tight text-white">{title}</h1>
+									<p class="mt-1 text-xs sm:text-sm text-zinc-400">{description}</p>
+								</div>
+
+								{live && (
+									<span class="inline-flex items-center gap-1.5 rounded-md border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs font-mono text-zinc-400 self-start sm:self-center">
+										<span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+										prerender = false
+									</span>
+								)}
+							</div>
+						</header>
+
+						<slot />
+					</main>
+				</div>
+
+				{/* App Footer (Flush to left & right edges) */}
+				<footer class="hidden md:block shrink-0 border-t border-zinc-800 bg-zinc-950 px-6 py-3.5 text-xs text-zinc-500 z-20">
+					<div class="flex items-center justify-between w-full font-mono text-[11px]">
+						<span>Astro v7 Webapp Shell</span>
+						<span>Cloudflare Workers Runtime</span>
+					</div>
+				</footer>
+			</div>
+		</div>
+	</body>
+</html>

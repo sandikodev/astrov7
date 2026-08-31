@@ -1,0 +1,21 @@
+---
+// Server island: re-rendered on the Worker for EVERY request, no client JS.
+// Use with `server:defer` + a `slot="fallback"` placeholder where it is used.
+const referer = Astro.request.headers.get('Referer');
+const renderedAt = new Date().toISOString();
+const activeSessions = 200 + Math.floor(Math.random() * 800);
+---
+
+<div class="flex flex-col justify-between rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 sm:p-6 font-mono text-xs text-zinc-300 h-full min-h-[200px]">
+	<div>
+		<div class="flex items-center gap-2 text-zinc-400 font-semibold uppercase tracking-wider text-[11px]">
+			<span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+			SERVER ISLAND · Per-Request Worker Render
+		</div>
+		<div class="mt-4 space-y-2 text-zinc-300">
+			<p>Server Time: <span class="text-white">{renderedAt}</span></p>
+			<p>Active Sessions: <span class="text-white">{activeSessions.toLocaleString()}</span></p>
+		</div>
+	</div>
+	{referer && <p class="mt-4 break-all text-[11px] text-zinc-500 pt-3 border-t border-zinc-800/80">Referer Path: {new URL(referer).pathname}</p>}
+</div>

@@ -1,0 +1,52 @@
+---
+// On-demand page: per-user state via Sessions (Cloudflare KV) + astro:actions mutations.
+export const prerender = false;
+import AppLayout from '@/layouts/AppLayout.astro';
+import TodoApp from '@/components/TodoApp.tsx';
+import PatternNote from '@/components/PatternNote.astro';
+
+const todos = (await Astro.session?.get('todos')) ?? [];
+const sessionIdSnippet = Astro.request.headers
+	.get('cookie')
+	?.split(';')
+	.find((c) => c.trim().startsWith('astrov7-session='))
+	?.split('=')[1]
+	?.slice(0, 8) ?? '—';
+---
+
+<AppLayout title="Todos Module" description="astro:actions mutations + Cloudflare KV Sessions" live>
+	<p class="mb-6 text-xs sm:text-sm text-zinc-400 leading-relaxed">
+		Each browser gets an isolated task list serialized into an encrypted session cookie and stored in Cloudflare KV. Form mutations run via <code class="rounded bg-zinc-900 px-1.5 py-0.5 font-mono text-xs text-zinc-200">astro:actions</code> with Zod schema validation.
+	</p>
+
+	{/* Full-width task list container matching Search & Weather modules */}
+	<div class="rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 sm:p-6">
+		<div class="mb-4 flex items-center justify-between">
+			<h2 class="text-sm font-semibold text-zinc-200">Session Task List</h2>
+			<span class="rounded bg-zinc-800 px-2 py-0.5 font-mono text-xs text-zinc-400 border border-zinc-700/80">
+				sid: {sessionIdSnippet}
+			</span>
+		</div>
+
+		<TodoApp client:load initial={todos as import('@/actions').Todo[]} />
+	</div>
+
+	<p class="mt-2.5 text-xs text-zinc-500 font-sans">
+		Opening in Incognito mode creates a separate isolated session list.
+	</p>
+
+	<div class="mt-8 space-y-3">
+		<PatternNote
+			number={1}
+			title="astro:actions — validated mutations"
+			description="defineAction + zod schema. The client calls actions.addTodo(...); the server validates the payload, writes KV, and returns the updated list."
+			code={`export const addTodo = defineAction({\n  input: z.object({ text: z.string().trim().min(1).max(500) }),\n  handler: async ({ text }, ctx) => { …ctx.session… }\n});`}
+		/>
+		<PatternNote
+			number={2}
+			title="Sessions — per-user state in KV"
+			description="The Cloudflare adapter auto-provisions a SESSION KV namespace. Values are signed, encrypted cookies + KV storage."
+			code={`const todos = await Astro.session?.get('todos');`}
+		/>
+	</div>
+</AppLayout>
