@@ -1,10 +1,10 @@
 ---
-// Webapp Entry Splash — branded loader that redirects the user to the app hub (/app/overview) after a few seconds.
+// Webapp Entry Splash — branded loader that redirects to /app/overview after a brief loading state.
 export const prerender = false;
 import '@/styles/global.css';
 
 const target = '/app/overview';
-const delay = 3200;
+const delay = 2200;
 ---
 
 <!doctype html>
@@ -31,46 +31,45 @@ const delay = 3200;
 			<h1 class="mt-6 text-lg font-semibold tracking-tight text-white">Webapp Shell</h1>
 			<p class="mt-1 text-xs text-zinc-400 font-mono">Cloudflare Workers Runtime</p>
 
-			{/* Loader + redirect */}
-			<div class="mt-10 flex w-full flex-col items-center gap-3">
+			{/* Clean Progress Bar */}
+			<div class="mt-8 flex w-full flex-col items-center gap-3">
 				<div
-					class="h-1 w-40 overflow-hidden rounded-full bg-zinc-800"
+					class="h-1 w-44 overflow-hidden rounded-full bg-zinc-800"
 					role="progressbar"
 					aria-label="Launching webapp"
 				>
-					<div id="fill" class="h-full w-0 rounded-full bg-emerald-400 transition-[width]"></div>
+					<div id="fill" class="h-full w-0 rounded-full bg-zinc-100 transition-[width]"></div>
 				</div>
 				<p class="font-mono text-[11px] text-zinc-500">
 					Launching modules<span id="dots">…</span>
 				</p>
 			</div>
 
+			{/* Subtle Skip Link (Non-redundant) */}
 			<a
 				href={target}
-				class="mt-8 inline-flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800 hover:text-white transition"
+				class="mt-6 text-xs text-zinc-500 hover:text-zinc-300 transition"
 			>
-				Open Overview
-				<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 12h14"/>
-				</svg>
+				Skip intro →
 			</a>
 		</main>
 
 		<script is:inline>
 			const target = '/app/overview';
-			const delay = 3200;
+			const delay = 2200;
 			const fill = document.getElementById('fill');
 			const dots = document.getElementById('dots');
 
-			fill.style.width = '100%';
-			fill.style.transitionDuration = delay + 'ms';
+			if (fill) {
+				fill.style.width = '100%';
+				fill.style.transitionDuration = delay + 'ms';
+			}
 
-			// Animated ellipsis while loading
 			let tick = 0;
 			const anim = window.setInterval(() => {
 				tick = (tick + 1) % 4;
-				dots.textContent = '…'.slice(0, tick + 1);
-			}, 400);
+				if (dots) dots.textContent = '…'.slice(0, tick + 1);
+			}, 300);
 
 			window.setTimeout(() => {
 				window.clearInterval(anim);

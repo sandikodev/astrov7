@@ -19,6 +19,8 @@
   "dependencies": {
     "@astrojs/cloudflare": "^14.2.5",
     "@astrojs/preact": "^6.0.4",
+    "@neon/config": "^1.1.0",
+    "@neon/env": "^1.1.6",
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.2.9",
     "preact": "^10.29.8",

@@ -1,7 +1,8 @@
 ---
-// Webapp Layout — Fixed 1-Screen Viewport Desktop App Shell + Native Mobile Layout
+// Webapp Layout — Fixed Viewport Desktop App Shell + Native Mobile Layout + SPA ClientRouter + Hysteresis Zero-Flicker Sticky Header
 import '@/styles/global.css';
 import AppNav from '@/components/AppNav.astro';
+import { ClientRouter } from 'astro:transitions';
 
 interface Props {
 	title: string;
@@ -28,6 +29,8 @@ const {
 		<meta name="color-scheme" content="dark" />
 		<meta name="robots" content="noindex" />
 		<title>{title}</title>
+		{/* Enable ClientRouter for instant SPA client transitions across webapp modules */}
+		<ClientRouter />
 	</head>
 	<body class="bg-zinc-950 text-zinc-100 selection:bg-zinc-800 selection:text-white antialiased min-h-screen">
 		{/* Native App Layout Container — Fixed 100vh viewport on Desktop */}
@@ -38,18 +41,25 @@ const {
 			{/* Main App Workspace Content Column */}
 			<div class="flex flex-1 flex-col min-w-0 md:h-screen md:max-h-screen md:overflow-hidden">
 				{/* Inner Scrollable Workspace Area */}
-				<div class="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-12 md:pb-8">
+				<div id="app-workspace-scroll" class="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pt-0 pb-28 md:pb-8">
 					<main class="w-full max-w-5xl mx-auto">
-						{/* App Header Banner */}
-						<header class="mb-6 pb-6 border-b border-zinc-800/80">
-							<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-								<div>
-									<h1 class="text-xl sm:text-2xl font-bold tracking-tight text-white">{title}</h1>
-									<p class="mt-1 text-xs sm:text-sm text-zinc-400">{description}</p>
+						{/* Zero-Flicker Sticky Header Banner (Flush at top-0, Hysteresis Protected) */}
+						<header
+							id="app-sticky-header"
+							class="sticky top-0 z-30 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3 mb-6 border-b border-zinc-800/80 bg-zinc-950/95 backdrop-blur-md transition-all duration-200"
+						>
+							<div class="flex items-center justify-between gap-3 min-w-0">
+								<div class="min-w-0 flex-1">
+									<h1 id="header-title" class="text-lg sm:text-xl font-bold tracking-tight text-white transition-all duration-200 truncate">
+										{title}
+									</h1>
+									<p id="header-desc" class="mt-0.5 text-xs sm:text-sm text-zinc-400 transition-all duration-200 truncate">
+										{description}
+									</p>
 								</div>
 
 								{live && (
-									<span class="inline-flex items-center gap-1.5 rounded-md border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs font-mono text-zinc-400 self-start sm:self-center">
+									<span id="header-badge" class="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs font-mono text-zinc-400 self-center">
 										<span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
 										prerender = false
 									</span>
@@ -70,5 +80,51 @@ const {
 				</footer>
 			</div>
 		</div>
+
+		<script is:inline>
+			function setupStickyHeader() {
+				const scrollContainer = document.getElementById('app-workspace-scroll');
+				const header = document.getElementById('app-sticky-header');
+				const title = document.getElementById('header-title');
+				const desc = document.getElementById('header-desc');
+
+				if (!scrollContainer || !header || !title) return;
+
+				// Hysteresis State: prevents flicker at boundary values
+				let isMinimized = false;
+
+				const onScroll = () => {
+					const st = scrollContainer.scrollTop;
+
+					// Trigger Minimize ONLY when scrolling DOWN past 30px
+					if (!isMinimized && st > 30) {
+						isMinimized = true;
+						header.classList.add('shadow-md', 'border-zinc-800');
+						title.classList.add('text-sm', 'font-semibold');
+						title.classList.remove('text-lg', 'sm:text-xl', 'font-bold');
+						if (desc) {
+							desc.classList.add('hidden');
+						}
+					} 
+					// Trigger Expand ONLY when scrolling UP past 8px (22px Hysteresis Gap prevents flicker)
+					else if (isMinimized && st < 8) {
+						isMinimized = false;
+						header.classList.remove('shadow-md');
+						title.classList.remove('text-sm', 'font-semibold');
+						title.classList.add('text-lg', 'sm:text-xl', 'font-bold');
+						if (desc) {
+							desc.classList.remove('hidden');
+						}
+					}
+				};
+
+				scrollContainer.removeEventListener('scroll', onScroll);
+				scrollContainer.addEventListener('scroll', onScroll, { passive: true });
+				onScroll();
+			}
+
+			setupStickyHeader();
+			document.addEventListener('astro:page-load', setupStickyHeader);
+		</script>
 	</body>
 </html>
