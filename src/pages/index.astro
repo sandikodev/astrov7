@@ -1,11 +1,114 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
+// Fully static landing page — built at CI/deploy time, served edge-cached.
+import Layout from '@/layouts/Layout.astro';
+import PatternNote from '@/components/PatternNote.astro';
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+const url = Astro.url;
 ---
 
-<Layout>
-	<Welcome />
+<Layout title="Astro v7 — Website + Webapp simulation">
+	{/* Hero Section */}
+	<header class="py-6 sm:py-12 md:py-16 text-left">
+		<div class="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-xs font-semibold font-mono text-indigo-300 mb-6">
+			<span class="h-2 w-2 rounded-full bg-indigo-400 animate-pulse"></span>
+			Astro 7 · Cloudflare Workers · Hybrid Rendering
+		</div>
+
+		<h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.15]">
+			One codebase, two rendering <br class="hidden sm:inline" />
+			<span class="bg-gradient-to-r from-indigo-400 via-sky-300 to-emerald-400 bg-clip-text text-transparent">
+				rendering strategies.
+			</span>
+		</h1>
+
+		<p class="mt-6 max-w-3xl text-base sm:text-lg leading-relaxed text-zinc-300">
+			A live simulation showcasing Astro 7's hybrid capabilities. The <strong>Website</strong> half is 100% static (SSG) — served instantly from Cloudflare Edge. The <strong>Webapp</strong> half opts in to the Worker with <code class="rounded bg-zinc-800 px-2 py-0.5 font-mono text-xs text-indigo-300">prerender = false</code>, streaming dynamic data on demand.
+		</p>
+
+		<div class="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5">
+			<a
+				href="/blog"
+				class="flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-zinc-950 shadow-lg shadow-white/10 hover:bg-zinc-200 transition"
+			>
+				Read the Blog →
+			</a>
+			<a
+				href="/app"
+				class="flex items-center justify-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-5 py-3 text-sm font-semibold text-emerald-300 hover:bg-emerald-500/20 transition"
+			>
+				<span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+				Launch Webapp App Shell →
+			</a>
+		</div>
+	</header>
+
+	{/* Cards Grid */}
+	<section class="mt-8 grid gap-5 sm:grid-cols-2">
+		<a
+			href="/blog"
+			class="group rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6 sm:p-7 backdrop-blur-sm transition hover:border-indigo-500/60 hover:shadow-xl hover:shadow-indigo-500/5"
+		>
+			<div class="flex items-center justify-between">
+				<span class="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-indigo-400">
+					WEBSITE · STATIC (SSG)
+				</span>
+				<span class="text-zinc-600 transition group-hover:translate-x-1 group-hover:text-indigo-400">→</span>
+			</div>
+			<h2 class="mt-4 text-xl font-bold text-white group-hover:text-indigo-300 transition">Static-Friendly Pages</h2>
+			<p class="mt-2 text-sm leading-relaxed text-zinc-400">
+				Content collections, static route generation, and optimized markup. Served directly from Cloudflare's edge cache with zero server runtime cost per hit.
+			</p>
+		</a>
+
+		<a
+			href="/app"
+			class="group rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6 sm:p-7 backdrop-blur-sm transition hover:border-emerald-500/60 hover:shadow-xl hover:shadow-emerald-500/5"
+		>
+			<div class="flex items-center justify-between">
+				<span class="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-emerald-400">
+					<span class="h-2 w-2 animate-pulse rounded-full bg-emerald-400"></span>
+					WEBAPP · ON-DEMAND (SSR)
+				</span>
+				<span class="text-zinc-600 transition group-hover:translate-x-1 group-hover:text-emerald-400">→</span>
+			</div>
+			<h2 class="mt-4 text-xl font-bold text-white group-hover:text-emerald-300 transition">Native Webapp Routes</h2>
+			<p class="mt-2 text-sm leading-relaxed text-zinc-400">
+				Encrypted KV Sessions, Astro Actions, route caching, server islands, and client Preact islands — streamed instantly to browser and mobile devices.
+			</p>
+		</a>
+	</section>
+
+	{/* Pattern Hierarchy Notes */}
+	<section class="mt-14 space-y-5">
+		<div class="flex items-center justify-between">
+			<h2 class="text-xl font-bold text-white">Data-Fetch Hierarchy on this Page</h2>
+			<span class="text-xs font-mono text-zinc-500">SSG Level 1</span>
+		</div>
+
+		<PatternNote
+			number={1}
+			title="Build-time rendering (SSG)"
+			description="This page is generated once during `astro build`. No Worker invocation, no runtime cost — plain HTML served at edge speed."
+			code={`// frontmatter of this page\n// zero runtime fetch calls — static HTML markup`}
+		/>
+
+		<PatternNote
+			number={2}
+			title="Content Collections (Content Layer API)"
+			description="Blog posts originate from src/content/blog via the Content Layer API with typed frontmatter schemas."
+			code={`const posts = await getCollection('blog');`}
+		/>
+
+		<PatternNote
+			number={3}
+			title="On-Demand Opt-in"
+			description="Hop over to /app — the same repo renders webapp pages dynamically in your Cloudflare Worker."
+			code={`export const prerender = false;`}
+		/>
+	</section>
+
+	<div class="mt-12 rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-4 text-xs font-mono text-zinc-500 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+		<span>Request URL: <code class="text-zinc-300">{url.href}</code></span>
+		<span class="text-emerald-400">Status: Edge Served</span>
+	</div>
 </Layout>
