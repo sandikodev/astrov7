@@ -26,9 +26,15 @@ export interface AbacPolicy {
 	description: string;
 }
 
-// Helper to safely read env variables without triggering Astro v6+ runtime.env getter error
-export function getEnvValue(key: string, envOverride?: Record<string, string>): string | undefined {
-	if (envOverride && envOverride[key]) return envOverride[key];
+import { env as cfEnv } from 'cloudflare:workers';
+
+// Helper to safely read env variables across local dev and Cloudflare Workers
+export function getEnvValue(key: string): string | undefined {
+	// Check Cloudflare virtual module (production & wrangler dev)
+	const cfEnvSafe = cfEnv as unknown as Record<string, string>;
+	if (cfEnvSafe && cfEnvSafe[key]) return cfEnvSafe[key];
+
+	// Check process.env (Node environments / fallback)
 	if (typeof process !== 'undefined' && process.env && process.env[key]) return process.env[key];
 	try {
 		return (import.meta as unknown as { env?: Record<string, string | undefined> }).env?.[key];
@@ -100,8 +106,8 @@ const DEFAULT_ABAC_POLICIES: AbacPolicy[] = [
 /**
  * Get Neon Serverless SQL Client
  */
-export function getNeonSql(envOverride?: Record<string, string>) {
-	const dbUrl = getEnvValue('DATABASE_URL', envOverride);
+export function getNeonSql() {
+	const dbUrl = getEnvValue('DATABASE_URL');
 	if (!dbUrl) {
 		return null;
 	}
@@ -113,9 +119,9 @@ let tablesInitialized = false;
 /**
  * Ensure database tables exist in Neon Postgres
  */
-export async function ensureNeonTables(envOverride?: Record<string, string>) {
+export async function ensureNeonTables() {
 	if (tablesInitialized) return true;
-	const sql = getNeonSql(envOverride);
+	const sql = getNeonSql();
 	if (!sql) return false;
 
 	try {
@@ -142,11 +148,11 @@ export async function ensureNeonTables(envOverride?: Record<string, string>) {
 /**
  * Fetch Profiles from Neon DB or Fallback
  */
-export async function getUserProfiles(envOverride?: Record<string, string>): Promise<UserProfile[]> {
-	const sql = getNeonSql(envOverride);
+export async function getUserProfiles(): Promise<UserProfile[]> {
+	const sql = getNeonSql();
 	if (sql) {
 		try {
-			await ensureNeonTables(envOverride);
+			await ensureNeonTables();
 			const rows = await sql`SELECT * FROM user_profiles ORDER BY created_at DESC;`;
 			if (rows.length > 0) {
 				return rows.map((r: any) => ({
@@ -168,13 +174,63 @@ export async function getUserProfiles(envOverride?: Record<string, string>): Pro
 }
 
 /**
- * Update Profile Avatar URL in Neon DB without clobbering existing profile names
+ * Fetch a single user by ID
  */
-export async function updateUserAvatar(userId: string, avatarUrl: string, envOverride?: Record<string, string>): Promise<boolean> {
-	const sql = getNeonSql(envOverride);
+export async function getUserProfile(id: string): Promise<UserProfile | null> {
+	const sql = getNeonSql();
 	if (sql) {
 		try {
-			await ensureNeonTables(envOverride);
+			await ensureNeonTables();
+			const rows = await sql`SELECT * FROM user_profiles WHERE id = ${id};`;
+			if (rows.length > 0) {
+				const r = rows[0]!;
+				return {
+					id: r.id, email: r.email, name: r.name, avatarUrl: r.avatar_url,
+					role: r.role, department: r.department, maxStorageMb: r.max_storage_mb,
+					createdAt: new Date(r.created_at).toISOString(),
+				};
+			}
+			return null;
+		} catch (e) {
+			console.warn('Neon query error in getUserProfile:', e);
+		}
+	}
+	return MOCK_PROFILES.find((p) => p.id === id) || null;
+}
+
+/**
+ * Fetch a single user by Email
+ */
+export async function getUserProfileByEmail(email: string): Promise<UserProfile | null> {
+	const sql = getNeonSql();
+	if (sql) {
+		try {
+			await ensureNeonTables();
+			const rows = await sql`SELECT * FROM user_profiles WHERE email = ${email};`;
+			if (rows.length > 0) {
+				const r = rows[0]!;
+				return {
+					id: r.id, email: r.email, name: r.name, avatarUrl: r.avatar_url,
+					role: r.role, department: r.department, maxStorageMb: r.max_storage_mb,
+					createdAt: new Date(r.created_at).toISOString(),
+				};
+			}
+			return null;
+		} catch (e) {
+			console.warn('Neon query error in getUserProfileByEmail:', e);
+		}
+	}
+	return MOCK_PROFILES.find((p) => p.email === email) || null;
+}
+
+/**
+ * Update Profile Avatar URL in Neon DB without clobbering existing profile names
+ */
+export async function updateUserAvatar(userId: string, avatarUrl: string): Promise<boolean> {
+	const sql = getNeonSql();
+	if (sql) {
+		try {
+			await ensureNeonTables();
 			await sql`
 				INSERT INTO user_profiles (id, email, name, avatar_url, role, department)
 				VALUES (${userId}, ${userId + '@astrov7.io'}, 'Astro Developer', ${avatarUrl}, 'developer', 'Engineering')
@@ -197,4 +253,95 @@ export function getRbacRoles(): RbacRole[] {
 
 export function getAbacPolicies(): AbacPolicy[] {
 	return DEFAULT_ABAC_POLICIES;
+}
+
+/**
+ * Create a new user profile in Neon DB (or fallback mock)
+ */
+export async function createUserProfile(
+	user: Omit<UserProfile, 'createdAt'>
+): Promise<UserProfile> {
+	const newUser: UserProfile = { ...user, createdAt: new Date().toISOString() };
+	const sql = getNeonSql();
+	if (sql) {
+		try {
+			await ensureNeonTables();
+			await sql`
+				INSERT INTO user_profiles (id, email, name, avatar_url, role, department, max_storage_mb)
+				VALUES (
+					${newUser.id}, ${newUser.email}, ${newUser.name},
+					${newUser.avatarUrl ?? null}, ${newUser.role},
+					${newUser.department}, ${newUser.maxStorageMb}
+				)
+				ON CONFLICT (id) DO UPDATE SET
+					name             = EXCLUDED.name,
+					email            = EXCLUDED.email,
+					role             = EXCLUDED.role,
+					department       = EXCLUDED.department,
+					max_storage_mb   = EXCLUDED.max_storage_mb;
+			`;
+		} catch (e) {
+			console.error('createUserProfile error:', e);
+		}
+	}
+	const existingIdx = MOCK_PROFILES.findIndex((p) => p.id === newUser.id);
+	if (existingIdx >= 0) MOCK_PROFILES[existingIdx] = newUser;
+	else MOCK_PROFILES.unshift(newUser);
+	return newUser;
+}
+
+/**
+ * Update an existing user profile in Neon DB (or fallback mock)
+ */
+export async function updateUserProfile(
+	id: string,
+	updates: Partial<Pick<UserProfile, 'name' | 'email' | 'role' | 'department' | 'maxStorageMb'>>
+): Promise<boolean> {
+	if (Object.keys(updates).length === 0) return true;
+
+	const sql = getNeonSql();
+	if (sql) {
+		try {
+			await ensureNeonTables();
+			
+			// COALESCE to update only provided fields without dynamic query builder (which Neon HTTP doesn't support via sql tag)
+			await sql`
+				UPDATE user_profiles 
+				SET 
+					name = COALESCE(${updates.name !== undefined ? updates.name : null}, name),
+					email = COALESCE(${updates.email !== undefined ? updates.email : null}, email),
+					role = COALESCE(${updates.role !== undefined ? updates.role : null}, role),
+					department = COALESCE(${updates.department !== undefined ? updates.department : null}, department),
+					max_storage_mb = COALESCE(${updates.maxStorageMb !== undefined ? updates.maxStorageMb : null}, max_storage_mb)
+				WHERE id = ${id}
+			`;
+		} catch (e) {
+			console.error('updateUserProfile error:', e);
+			return false;
+		}
+	}
+	const target = MOCK_PROFILES.find((p) => p.id === id);
+	if (target) Object.assign(target, updates);
+	return true;
+}
+
+/**
+ * Delete a user profile from Neon DB (or fallback mock)
+ */
+export async function deleteUserProfile(
+	id: string
+): Promise<boolean> {
+	const sql = getNeonSql();
+	if (sql) {
+		try {
+			await ensureNeonTables();
+			await sql`DELETE FROM user_profiles WHERE id = ${id}`;
+		} catch (e) {
+			console.error('deleteUserProfile error:', e);
+			return false;
+		}
+	}
+	const idx = MOCK_PROFILES.findIndex((p) => p.id === id);
+	if (idx >= 0) MOCK_PROFILES.splice(idx, 1);
+	return true;
 }

@@ -6,14 +6,14 @@
 	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
 	"assets": {
 		"binding": "ASSETS",
-		"directory": "./dist",
+		"directory": "./dist/client",
 		"not_found_handling": "404-page",
-		"run_worker_first": ["/app/*", "/api/*"]
+		"run_worker_first": ["/", "/app", "/app/*", "/api/*", "/auth", "/auth/*", "/_actions/*", "/_server-islands/*", "/_image"]
 	},
 	"kv_namespaces": [
 		{
 			"binding": "SESSION",
-			"id": "astrov7_dev_session_kv"
+			"id": "fc6773aceea2465d8e9d2669bbf9a4d6"
 		}
 	],
 	"vars": {

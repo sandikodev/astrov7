@@ -1,22 +1,34 @@
 import type { MiddlewareHandler } from 'astro';
+import { getUserProfile } from '@lib/neon';
 
 export const onRequest: MiddlewareHandler = async (context, next) => {
 	const startTime = performance.now();
-	const { url, cookies, redirect, locals, request } = context;
+	const { url, redirect, locals, request, session } = context;
 	const pathname = url.pathname;
 
-	// Read session cookie (aligned with astro.config.mjs astrov7-session)
-	const sessionToken = cookies.get('astrov7-session')?.value || cookies.get('astro_v7_session')?.value;
+	// Read session from native Astro session
+	let userId: string | undefined;
+	if (session) {
+		userId = await session.get('userId');
+	}
 
-	if (sessionToken) {
-		locals.user = {
-			id: 'usr_dev_01',
-			name: 'Astro Developer',
-			email: 'dev@astrov7.community',
-			role: 'admin',
-			avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-		};
-		locals.session = { id: sessionToken, userId: 'usr_dev_01' };
+	if (userId) {
+		const userProfile = await getUserProfile(userId);
+		
+		if (userProfile) {
+			locals.user = {
+				id: userProfile.id,
+				name: userProfile.name,
+				email: userProfile.email,
+				role: userProfile.role,
+				...(userProfile.avatarUrl ? { avatarUrl: userProfile.avatarUrl } : {}),
+			};
+			locals.session = { id: 'kv-session', userId: userProfile.id };
+		} else {
+			locals.user = null;
+			locals.session = null;
+			if (session) session.destroy();
+		}
 	} else {
 		locals.user = null;
 		locals.session = null;

@@ -7,8 +7,7 @@ export const prerender = false;
 
 export async function POST(context: APIContext): Promise<Response> {
 	// Session Guard
-	const sessionToken = context.cookies.get('astrov7-session')?.value || context.cookies.get('astro_v7_session')?.value;
-	if (!sessionToken) {
+	if (!context.locals.user) {
 		return Response.json(
 			{ ok: false, error: 'Unauthorized: Valid session required to revalidate cache tags' },
 			{ status: 401 }

@@ -38,3 +38,7 @@ Error: Unexpectedly unable to find a component instance for route /
 - Set `ssr.optimizeDeps.noDiscovery = true` in `astro.config.mjs` to stop Vite 6 mid-flight dep discovery from wiping `.vite/deps_ssr`.
 - Exclude `@astrojs/preact`, `astro/actions`, and `astro:actions` from dependency optimization.
 - Standardize all module imports using Single Source of Truth path aliases in `tsconfig.json`.
+
+### 3. Developer Experience (DX) Iteration
+
+To maximize workspace area for developers, the **Dev Trace Console** has been structurally optimized into a minimal 2-column layout (Log streams on the left, Vertical filter tabs on the right). This ensures complex edge execution payloads and HTTP/2 trace logs are fully readable, while providing immediate one-click copy and filtering utilities nestled securely in the console header.

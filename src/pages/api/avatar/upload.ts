@@ -4,11 +4,11 @@ import { uploadAvatar } from '@lib/storage';
 import { updateUserAvatar } from '@lib/neon';
 import { broadcastServerTelemetry } from '@lib/telemetry';
 
-export const POST: APIRoute = async ({ request, cookies }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
 	try {
 		// Session Guard
-		const sessionToken = cookies.get('astrov7-session')?.value || cookies.get('astro_v7_session')?.value;
-		if (!sessionToken) {
+		const user = locals.user;
+		if (!user) {
 			return new Response(JSON.stringify({ error: 'Unauthorized: Valid session required for avatar uploads' }), {
 				status: 401,
 				headers: { 'Content-Type': 'application/json' },
@@ -17,7 +17,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
 		const formData = await request.formData();
 		const file = formData.get('avatar') as File | null;
-		const userId = (formData.get('userId') as string) || 'usr_dev_01';
+		
+		// 🚨 Fix IDOR: DO NOT trust client-provided userId. Use the server-authenticated session.
+		const userId = user.id;
 
 		if (!file) {
 			return new Response(JSON.stringify({ error: 'No avatar image file provided' }), {

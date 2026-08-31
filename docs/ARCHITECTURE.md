@@ -252,3 +252,24 @@ Our codebase implements the official triaged mitigations to ensure 100% stabilit
 1. **`ssr.optimizeDeps.noDiscovery = true`**: Prevents Vite 6 mid-flight dependency discovery from wiping `.vite/deps_ssr`.
 2. **Explicit Dependency Exclusion**: Excluding `@astrojs/preact`, `astro/actions`, `astro:actions`, and `astro/content` in `astro.config.mjs` under `vite.optimizeDeps.exclude` and `vite.ssr.optimizeDeps.exclude`.
 3. **Path Aliasing**: Single Source of Truth aliasing via `tsconfig.json` (`@components/*`, `@layouts/*`, `@lib/*`, etc.).
+### 13.3 Environment Resolution (`cloudflare:workers`)
+Astro v6+ removes access to `Astro.locals.runtime.env` in the Cloudflare adapter to enforce environment purity. In this reference implementation, all environment variables (`DATABASE_URL`, `AWS_ACCESS_KEY_ID`, etc.) are resolved centrally in `src/lib/neon.ts` and `src/lib/storage.ts` using the Cloudflare virtual module:
+```ts
+import { env } from 'cloudflare:workers';
+const cfEnv = env as unknown as Record<string, string>;
+```
+This isolates the dependency and eliminates the need to recursively pass `env` through middleware and actions.
+
+---
+
+## 14. Operational Pitfalls
+
+### 14.1 The Silent Mock Fallback
+If you deploy the application without setting `DATABASE_URL` via Cloudflare Secrets (`wrangler secret put DATABASE_URL`), **the app will not throw a 500 on boot**. Instead, `src/lib/neon.ts` handles the missing connection gracefully by falling back to `MOCK_PROFILES` (an in-memory array of user data).
+
+However, in a deployed Serverless architecture, Cloudflare V8 isolates are ephemeral and distributed. The in-memory array is destroyed constantly.
+**Symptoms**:
+- Users get caught in infinite login/logout loops.
+- `GET /app/users` continuously redirects to login (HTTP 302).
+- Edits made on the client vanish immediately.
+**Resolution**: Bind your database secrets so the application uses the durable Neon PostgreSQL layer instead of the ephemeral mock layer.

@@ -112,29 +112,43 @@ export default function RbacAbacManager({ roles, policies }: Props) {
 					<div class="grid gap-4 sm:grid-cols-2">
 						<div>
 							<label class="block text-xs font-medium text-zinc-300 mb-1.5">User Role</label>
-							<select
-								value={evalRole}
-								onChange={(e) => setEvalRole((e.target as HTMLSelectElement).value as 'admin' | 'developer' | 'member')}
-								class="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-xs text-white"
-							>
-								<option value="admin">Admin</option>
-								<option value="developer">Developer</option>
-								<option value="member">Member</option>
-							</select>
+							<div class="relative">
+								<select
+									value={evalRole}
+									onChange={(e) => setEvalRole((e.target as HTMLSelectElement).value as 'admin' | 'developer' | 'member')}
+									class="w-full appearance-none rounded-xl border border-zinc-800/80 bg-zinc-950 px-3.5 py-2 pr-9 text-xs text-white focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 cursor-pointer transition"
+								>
+									<option value="admin">Admin</option>
+									<option value="developer">Developer</option>
+									<option value="member">Member</option>
+								</select>
+								<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-zinc-400">
+									<svg class="h-3.5 w-3.5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+									</svg>
+								</div>
+							</div>
 						</div>
 
 						<div>
 							<label class="block text-xs font-medium text-zinc-300 mb-1.5">Target Permission</label>
-							<select
-								value={evalPermission}
-								onChange={(e) => setEvalPermission((e.target as HTMLSelectElement).value)}
-								class="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-xs text-white"
-							>
-								<option value="upload:storage">upload:storage (Neon Object Storage)</option>
-								<option value="write:data">write:data (Neon Postgres Mutations)</option>
-								<option value="delete:data">delete:data (Data Purge)</option>
-								<option value="manage:users">manage:users (User Administration)</option>
-							</select>
+							<div class="relative">
+								<select
+									value={evalPermission}
+									onChange={(e) => setEvalPermission((e.target as HTMLSelectElement).value)}
+									class="w-full appearance-none rounded-xl border border-zinc-800/80 bg-zinc-950 px-3.5 py-2 pr-9 text-xs text-white focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 cursor-pointer transition"
+								>
+									<option value="upload:storage">upload:storage (Neon Object Storage)</option>
+									<option value="write:data">write:data (Neon Postgres Mutations)</option>
+									<option value="delete:data">delete:data (Data Purge)</option>
+									<option value="manage:users">manage:users (User Administration)</option>
+								</select>
+								<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-zinc-400">
+									<svg class="h-3.5 w-3.5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+									</svg>
+								</div>
+							</div>
 						</div>
 
 						<div>

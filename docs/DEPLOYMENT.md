@@ -114,8 +114,17 @@ npx wrangler secret put AWS_SECRET_ACCESS_KEY
 npx wrangler secret put NEON_READONLY_API_TOKEN
 ```
 
-To use a var in code, add it to `astro.config.mjs` → `env.schema` (via `envField`) and import from
-`astro:env/server` (or `astro:env/client` for `PUBLIC_*`). See `.env.example` and `.dev.vars.example`.
+To use a var in code in this repository:
+1. **Cloudflare Secrets (Production)**: Due to Astro v6's Cloudflare Adapter restrictions (removal of `Astro.locals.runtime.env`), we resolve these centrally in `src/lib/neon.ts` using the Cloudflare virtual module:
+   ```ts
+   import { env } from 'cloudflare:workers';
+   const cfEnv = env as unknown as Record<string, string>;
+   const dbUrl = cfEnv['DATABASE_URL'];
+   ```
+2. **Public Constants**: Add to `astro.config.mjs` → `env.schema` and import from `astro:env/client` for `PUBLIC_*`. See `.env.example`.
+
+> **⚠️ CRITICAL: The Silent Mock Fallback Pitfall**
+> If you deploy to production without setting `wrangler secret put DATABASE_URL`, your application will not crash. Instead, `src/lib/neon.ts` will silently fall back to an ephemeral in-memory mock database (`MOCK_PROFILES`). In a serverless isolate environment, this memory disappears between requests, causing user sessions to constantly invalidate and triggering infinite login loops or HTTP 500 errors. **Always bind your secrets!**
 
 ---
 

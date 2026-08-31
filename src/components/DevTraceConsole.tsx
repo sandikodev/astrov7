@@ -231,7 +231,45 @@ export default function DevTraceConsole({ serverTrace }: Props) {
 					</div>
 				</div>
 
-				<div class="flex items-center gap-2 shrink-0 pl-2">
+				<div class="flex items-center gap-3 shrink-0 pl-2">
+					{isOpen && (
+						<div class="flex items-center gap-2 mr-2" onClick={(e) => e.stopPropagation()}>
+							<div class="relative">
+								<select
+									value={filterLevel}
+									onChange={(e) => setFilterLevel((e.target as HTMLSelectElement).value as 'all' | 'info' | 'success' | 'warn' | 'trace')}
+									class="appearance-none rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1 pr-7 text-[11px] text-zinc-300 focus:outline-none focus:border-zinc-700 cursor-pointer"
+								>
+									<option value="all">All Levels</option>
+									<option value="info">Info</option>
+									<option value="success">Success</option>
+									<option value="trace">Trace</option>
+									<option value="warn">Warn</option>
+								</select>
+								<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-zinc-400">
+									<svg class="h-3 w-3 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+									</svg>
+								</div>
+							</div>
+
+							<button
+								type="button"
+								onClick={handleCopyAllJSON}
+								class="rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-[11px] font-semibold text-zinc-300 hover:bg-zinc-800 transition cursor-pointer"
+							>
+								Copy All JSON
+							</button>
+
+							<button
+								type="button"
+								onClick={handleClearLogs}
+								class="rounded-lg border border-rose-500/30 bg-rose-500/10 px-2.5 py-1 text-[11px] font-semibold text-rose-300 hover:bg-rose-500/20 transition cursor-pointer"
+							>
+								Clear
+							</button>
+						</div>
+					)}
 					<span class="text-[10px] text-zinc-500 font-mono hidden md:inline">
 						{isOpen ? 'Click to collapse' : 'Click to expand console'}
 					</span>
@@ -245,95 +283,13 @@ export default function DevTraceConsole({ serverTrace }: Props) {
 			{isOpen && (
 				<div
 					style={{ height: `${consoleHeight}px` }}
-					class="flex flex-col bg-zinc-950/95 overflow-hidden relative transition-none w-full"
+					class="flex flex-row bg-zinc-950/95 overflow-hidden relative transition-none w-full"
 				>
-					<div class="flex flex-col flex-1 min-h-0 w-full">
-						{/* Navigation Tabs & Controls (Edge-to-Edge Bar with px-4 internal padding) */}
-						<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800/80 px-4 py-2.5 shrink-0 bg-zinc-950">
-							{/* Tabs */}
-							<div class="flex items-center gap-1.5">
-								<button
-									type="button"
-									onClick={() => setActiveTab('client')}
-									class={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 ${
-										activeTab === 'client'
-											? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-											: 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
-									}`}
-								>
-									🌐 Client & App Events
-									<span class="rounded-full bg-zinc-800 px-1.5 py-0.2 text-[9px]">
-										{logs.filter((l) => l.tab === 'client').length}
-									</span>
-								</button>
-
-								<button
-									type="button"
-									onClick={() => setActiveTab('neon')}
-									class={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 ${
-										activeTab === 'neon'
-											? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-											: 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
-									}`}
-								>
-									🐘 Neon Serverless Trace
-									<span class="rounded-full bg-zinc-800 px-1.5 py-0.2 text-[9px]">
-										{logs.filter((l) => l.tab === 'neon').length}
-									</span>
-								</button>
-
-								<button
-									type="button"
-									onClick={() => setActiveTab('cloudflare')}
-									class={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 ${
-										activeTab === 'cloudflare'
-											? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-											: 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
-									}`}
-								>
-									⛅ Cloudflare Edge Trace
-									<span class="rounded-full bg-zinc-800 px-1.5 py-0.2 text-[9px]">
-										{logs.filter((l) => l.tab === 'cloudflare').length}
-									</span>
-								</button>
-							</div>
-
-							{/* Action Buttons */}
-							<div class="flex items-center gap-2">
-								<select
-									value={filterLevel}
-									onChange={(e) => setFilterLevel((e.target as HTMLSelectElement).value as 'all' | 'info' | 'success' | 'warn' | 'trace')}
-									class="rounded-lg border border-zinc-800 bg-zinc-900 px-2 py-1 text-[11px] text-zinc-300 focus:outline-none cursor-pointer"
-								>
-									<option value="all">All Levels</option>
-									<option value="info">Info</option>
-									<option value="success">Success</option>
-									<option value="trace">Trace</option>
-									<option value="warn">Warn</option>
-								</select>
-
-								<button
-									type="button"
-									onClick={handleCopyAllJSON}
-									class="rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-[11px] font-semibold text-zinc-300 hover:bg-zinc-800 transition cursor-pointer"
-								>
-									Copy All JSON
-								</button>
-
-								<button
-									type="button"
-									onClick={handleClearLogs}
-									class="rounded-lg border border-rose-500/30 bg-rose-500/10 px-2.5 py-1 text-[11px] font-semibold text-rose-300 hover:bg-rose-500/20 transition cursor-pointer"
-								>
-									Clear
-								</button>
-							</div>
-						</div>
-
-						{/* Scrollable Log Stream Container (Flush to edges, internal px-4 padding, full space usage) */}
+					{/* Left Column: Scrollable Log Stream Container */}
+					<div class="flex-1 min-w-0 flex flex-col border-r border-zinc-800/80">
 						{filteredLogs.length === 0 ? (
-							<div class="flex-1 min-h-0 px-4 py-2 w-full flex items-center justify-center">
-								<div class="w-full p-6 text-center text-zinc-500 border border-dashed border-zinc-800/80 rounded-xl">
+							<div class="flex-1 min-h-0 p-4 w-full flex">
+								<div class="w-full h-full flex flex-col items-center justify-center p-6 text-center text-zinc-500 border border-dashed border-zinc-800/80 rounded-xl">
 									No trace logs recorded for tab [{activeTab.toUpperCase()}] yet. Execute a simulation above to capture live telemetry.
 								</div>
 							</div>
@@ -419,6 +375,63 @@ export default function DevTraceConsole({ serverTrace }: Props) {
 								})}
 							</div>
 						)}
+					</div>
+
+					{/* Right Column: Navigation Tabs Sidebar */}
+					<div class="w-48 sm:w-56 shrink-0 flex flex-col gap-2 p-3 bg-zinc-950 overflow-y-auto">
+						<button
+							type="button"
+							onClick={() => setActiveTab('client')}
+							class={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition cursor-pointer flex flex-col items-start gap-1 text-left ${
+								activeTab === 'client'
+									? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+									: 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 border border-transparent'
+							}`}
+						>
+							<div class="flex items-center justify-between w-full">
+								<span class="flex items-center gap-1.5">🌐 Client Events</span>
+								<span class="rounded-full bg-zinc-800 px-1.5 py-0.5 text-[9px] text-zinc-300 leading-none">
+									{logs.filter((l) => l.tab === 'client').length}
+								</span>
+							</div>
+							<span class="text-[10px] font-normal opacity-70">Browser & SPA Events</span>
+						</button>
+
+						<button
+							type="button"
+							onClick={() => setActiveTab('neon')}
+							class={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition cursor-pointer flex flex-col items-start gap-1 text-left ${
+								activeTab === 'neon'
+									? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+									: 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 border border-transparent'
+							}`}
+						>
+							<div class="flex items-center justify-between w-full">
+								<span class="flex items-center gap-1.5">🐘 Neon Trace</span>
+								<span class="rounded-full bg-zinc-800 px-1.5 py-0.5 text-[9px] text-zinc-300 leading-none">
+									{logs.filter((l) => l.tab === 'neon').length}
+								</span>
+							</div>
+							<span class="text-[10px] font-normal opacity-70">Serverless Postgres</span>
+						</button>
+
+						<button
+							type="button"
+							onClick={() => setActiveTab('cloudflare')}
+							class={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition cursor-pointer flex flex-col items-start gap-1 text-left ${
+								activeTab === 'cloudflare'
+									? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+									: 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 border border-transparent'
+							}`}
+						>
+							<div class="flex items-center justify-between w-full">
+								<span class="flex items-center gap-1.5">⛅ Edge Trace</span>
+								<span class="rounded-full bg-zinc-800 px-1.5 py-0.5 text-[9px] text-zinc-300 leading-none">
+									{logs.filter((l) => l.tab === 'cloudflare').length}
+								</span>
+							</div>
+							<span class="text-[10px] font-normal opacity-70">Cloudflare Worker Trace</span>
+						</button>
 					</div>
 				</div>
 			)}

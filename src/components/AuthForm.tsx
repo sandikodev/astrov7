@@ -125,15 +125,22 @@ export default function AuthForm({ redirectUrl = '/app' }: Props) {
 						<label class="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 font-mono mb-1.5">
 							Community Role
 						</label>
-						<select
-							value={role}
-							onChange={(e) => setRole((e.target as HTMLSelectElement).value as 'admin' | 'developer' | 'member')}
-							class="w-full h-10 rounded-xl border border-zinc-800/80 bg-zinc-950/80 px-3 text-xs text-white focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all"
-						>
-							<option value="admin">Admin (Full RBAC/ABAC)</option>
-							<option value="developer">Developer (Default)</option>
-							<option value="member">Community Member</option>
-						</select>
+						<div class="relative">
+							<select
+								value={role}
+								onChange={(e) => setRole((e.target as HTMLSelectElement).value as 'admin' | 'developer' | 'member')}
+								class="w-full h-10 appearance-none rounded-xl border border-zinc-800/80 bg-zinc-950/80 px-3.5 pr-9 text-xs text-white focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all cursor-pointer"
+							>
+								<option value="admin">Admin (Full RBAC/ABAC)</option>
+								<option value="developer">Developer (Default)</option>
+								<option value="member">Community Member</option>
+							</select>
+							<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-zinc-400">
+								<svg class="h-3.5 w-3.5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+								</svg>
+							</div>
+						</div>
 					</div>
 				)}
 

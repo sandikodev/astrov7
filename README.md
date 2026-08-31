@@ -307,6 +307,23 @@ bun run cf:deploy    # wrangler types && astro check && astro build && wrangler 
 }
 ```
 
+### Environment Resolution (`cloudflare:workers`)
+Astro v6 restricts direct access to `Astro.locals.runtime.env` for environment variables. In this codebase, all environment resolutions (including Cloudflare Secrets like `DATABASE_URL`) are handled centrally in `src/lib/neon.ts` using the Cloudflare virtual module:
+
+```ts
+import { env } from 'cloudflare:workers';
+const cfEnvSafe = env as unknown as Record<string, string>;
+export function getEnvValue(key: string) { return cfEnvSafe[key] || process.env[key]; }
+```
+
+### Secrets
+To run the database in production, you must set Cloudflare Secrets (do not add them to `wrangler.jsonc`):
+```sh
+wrangler secret put DATABASE_URL
+wrangler secret put AWS_ACCESS_KEY_ID
+wrangler secret put AWS_SECRET_ACCESS_KEY
+```
+
 ---
 
 ## Deployment

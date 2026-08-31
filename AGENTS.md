@@ -42,7 +42,11 @@ Manage the background server with:
      - Keep `ssr.optimizeDeps.noDiscovery = true` in `astro.config.mjs`.
      - Keep `@astrojs/preact`, `astro/actions`, and `astro:actions` in `optimizeDeps.exclude` and `ssr.optimizeDeps.exclude`.
 
-4. **Layout Composition Hierarchy**:
+4. **Cloudflare Env Resolution (Astro v6+)**:
+   - `Astro.locals.runtime.env` has been removed by the Astro v6 adapter.
+   - Use the virtual module `import { env } from 'cloudflare:workers'` exclusively in centralized backend files (e.g. `src/lib/neon.ts` and `src/lib/storage.ts`) and cast it via `env as unknown as Record<string, string>`. Do NOT pass `env` through middleware/components manually.
+
+5. **Layout Composition Hierarchy**:
    - `BaseLayout.astro`: Universal root shell containing `<head>`, `<ClientRouter />`, CSS, and sticky `<DevTraceConsole />`.
    - `Layout.astro`: Public marketing & blog layout (composes `BaseLayout`).
    - `AppLayout.astro`: Desktop webapp app shell + mobile responsive UX (composes `BaseLayout`).

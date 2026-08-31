@@ -43,3 +43,20 @@ const { payload } = await jwtVerify(token, jwks);
 User file assets (such as profile avatars) are stored in Neon's S3-compatible Object Storage. The worker generates presigned upload URLs using `@aws-sdk/client-s3`, keeping binary file storage decoupled from relational database tables.
 
 This architecture powers the `/app/neon-api`, `/app/profile`, and `/app/settings` pages in this application.
+
+### 4. Centralized Edge Secrets & Configuration
+
+When deploying Astro v6/v7 on Cloudflare Workers, access to `Astro.locals.runtime.env` has been removed to enforce environment purity. We address this by centralizing all Cloudflare bindings (like `DATABASE_URL`) via the `cloudflare:workers` virtual module:
+
+```ts
+import { env } from 'cloudflare:workers';
+const cfEnv = env as unknown as Record<string, string>;
+
+export function getNeonSql() {
+  const dbUrl = cfEnv['DATABASE_URL'];
+  if (!dbUrl) return null;
+  return neon(dbUrl);
+}
+```
+
+This ensures we can access our Cloudflare Secrets (injected securely via `wrangler secret put DATABASE_URL`) directly where we need them, without polluting our Astro components or middleware.

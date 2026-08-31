@@ -14,12 +14,12 @@ const { title, description } = Astro.props;
 <BaseLayout title={title} description={description}>
 	<Nav />
 	
-	<main class="mx-auto w-full max-w-6xl flex-1 px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 pb-20">
+	<main class="mx-auto w-full max-w-6xl flex-1 px-4 sm:px-6 lg:px-8 pt-6 sm:pt-10 pb-8">
 		<slot />
 	</main>
 
-	<footer class="border-t border-zinc-800/80 bg-zinc-950/80 px-4 py-8 text-center text-xs text-zinc-500">
-		<div class="mx-auto flex max-w-6xl flex-col sm:flex-row items-center justify-between gap-4 px-4 sm:px-6">
+	<footer class="border-t border-zinc-800/80 bg-zinc-950/90 py-2.5 px-4 text-center text-[11px] text-zinc-500 shrink-0 mt-auto">
+		<div class="w-full flex flex-col sm:flex-row items-center justify-between gap-2 px-4 sm:px-6">
 			<p class="font-mono text-zinc-400">astrov7 · Public Website & Blog</p>
 			<p>Static islands (website) + On-demand Workers (webapp). Deployed on Cloudflare.</p>
 		</div>

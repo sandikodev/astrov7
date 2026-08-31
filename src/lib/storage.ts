@@ -4,11 +4,11 @@ import { getEnvValue } from './neon';
 /**
  * Neon Object Storage S3 Client Factory
  */
-export function getNeonStorageClient(envOverride?: Record<string, string>): S3Client | null {
-	const endpoint = getEnvValue('AWS_ENDPOINT_URL_S3', envOverride);
-	const accessKeyId = getEnvValue('AWS_ACCESS_KEY_ID', envOverride);
-	const secretAccessKey = getEnvValue('AWS_SECRET_ACCESS_KEY', envOverride);
-	const region = getEnvValue('AWS_REGION', envOverride) || 'us-east-2';
+export function getNeonStorageClient(): S3Client | null {
+	const endpoint = getEnvValue('AWS_ENDPOINT_URL_S3');
+	const accessKeyId = getEnvValue('AWS_ACCESS_KEY_ID');
+	const secretAccessKey = getEnvValue('AWS_SECRET_ACCESS_KEY');
+	const region = getEnvValue('AWS_REGION') || 'us-east-2';
 
 	if (!endpoint || !accessKeyId || !secretAccessKey) {
 		return null;
@@ -31,11 +31,10 @@ export function getNeonStorageClient(envOverride?: Record<string, string>): S3Cl
 export async function uploadAvatar(
 	userId: string,
 	fileBuffer: Buffer | Uint8Array,
-	contentType: string = 'image/png',
-	envOverride?: Record<string, string>
+	contentType: string = 'image/png'
 ): Promise<{ success: boolean; url: string; key: string }> {
-	const client = getNeonStorageClient(envOverride);
-	const bucketName = getEnvValue('S3_BUCKET_NAME', envOverride) || 'assets';
+	const client = getNeonStorageClient();
+	const bucketName = getEnvValue('S3_BUCKET_NAME') || 'assets';
 	const key = `avatars/${userId}-${Date.now()}.png`;
 
 	if (!client) {
@@ -55,7 +54,7 @@ export async function uploadAvatar(
 
 		await client.send(command);
 
-		const endpoint = getEnvValue('AWS_ENDPOINT_URL_S3', envOverride);
+		const endpoint = getEnvValue('AWS_ENDPOINT_URL_S3');
 		const publicUrl = `${endpoint}/${bucketName}/${key}`;
 		return { success: true, url: publicUrl, key };
 	} catch (err) {

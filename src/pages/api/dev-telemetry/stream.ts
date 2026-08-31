@@ -1,15 +1,18 @@
 import type { APIRoute } from 'astro';
-import { registerSseClient, unregisterSseClient } from '@lib/telemetry';
+import { registerSseClient, unregisterSseClient } from '@/lib/telemetry';
 
 export const prerender = false;
 
 export const GET: APIRoute = async () => {
 	let clientController: ReadableStreamDefaultController | null = null;
+	let heartbeatTimer: any = null;
 
 	const stream = new ReadableStream({
 		start(controller) {
 			clientController = controller;
 			registerSseClient(controller);
+
+			const encoder = new TextEncoder();
 
 			// Send initial handshake ping
 			const pingData = `data: ${JSON.stringify({
@@ -26,9 +29,21 @@ export const GET: APIRoute = async () => {
 				},
 			})}\n\n`;
 
-			controller.enqueue(new TextEncoder().encode(pingData));
+			controller.enqueue(encoder.encode(pingData));
+
+			// Send periodic heartbeat comment every 15s to keep Workers isolate active
+			heartbeatTimer = setInterval(() => {
+				try {
+					controller.enqueue(encoder.encode(': heartbeat\n\n'));
+				} catch {
+					clearInterval(heartbeatTimer);
+				}
+			}, 15000);
 		},
 		cancel() {
+			if (heartbeatTimer) {
+				clearInterval(heartbeatTimer);
+			}
 			if (clientController) {
 				unregisterSseClient(clientController);
 			}
